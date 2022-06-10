@@ -25,16 +25,16 @@ class User(Base):
     uuid = Column(String(36), default=gen_uuid)
     created_at = Column(DateTime(), default=datetime.now)
 
-    first_name = Column(String(64), nullable=False)
-    last_name = Column(String(64), nullable=False)
-    username = Column(String(64), nullable=False, unique=True)
+    first_name = Column(String(64), nullable=True)
+    last_name = Column(String(64), nullable=True)
+    username = Column(String(64), nullable=False)
 
     email = Column(String(128), nullable=False, unique=True)
     password_hash = Column(String(128), nullable=False)
 
     role = Column(Enum(UserRole), default=UserRole.Anonymous)
 
-    survey = relationship("Survey", viewonly=True)
+    # survey = relationship("Survey", viewonly=True)
 
     @property
     def password(self):
