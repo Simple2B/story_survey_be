@@ -12,6 +12,7 @@ class Survey(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(128), nullable=False)
     created_at = Column(DateTime(), default=datetime.now)
+    published = Column(Boolean, default=True)
 
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
