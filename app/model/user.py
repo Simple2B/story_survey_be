@@ -23,6 +23,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid)
+    google_id = Column(String(128), nullable=True)
+    facebook_id = Column(String(128), nullable=True)
+
     created_at = Column(DateTime(), default=datetime.now)
 
     first_name = Column(String(64), nullable=True)
