@@ -10,6 +10,7 @@ class Answer(Base):
 
     id = Column(Integer, primary_key=True)
     answer = Column(String(128), nullable=False)
+    created_at = Column(DateTime(), default=datetime.now)
 
     question_id = Column(Integer, ForeignKey("questions.id"))
 
