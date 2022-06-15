@@ -3,7 +3,11 @@ from fastapi import FastAPI
 from app.router import answer, question, survey, user, auth
 from .config import settings
 
-app = FastAPI()
+app = FastAPI(
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+)
 app.include_router(answer.router)
 app.include_router(question.router)
 app.include_router(survey.router)

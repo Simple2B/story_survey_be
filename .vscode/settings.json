@@ -3,4 +3,7 @@
     "editor.formatOnSave": true,
     "python.linting.enabled": true,
     "python.terminal.activateEnvironment": true,
+    "cSpell.words": [
+        "redoc"
+    ],
 }
