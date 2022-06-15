@@ -16,3 +16,4 @@ __pycache__/
 Pipfile
 
 database-*.sqlite3
+test.db
