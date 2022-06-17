@@ -3,7 +3,6 @@ from datetime import datetime
 import enum
 from sqlalchemy import Enum
 from sqlalchemy import Column, Integer, String, DateTime, func, or_
-from sqlalchemy.orm import relationship
 
 from app.hash_utils import make_hash, hash_verify
 from app.database import Base, SessionLocal
@@ -25,17 +24,18 @@ class User(Base):
     uuid = Column(String(36), default=gen_uuid)
     google_id = Column(String(128), nullable=True)
     facebook_id = Column(String(128), nullable=True)
+    twitter_id = Column(String(128), nullable=True)
 
     created_at = Column(DateTime(), default=datetime.now)
 
     first_name = Column(String(64), nullable=True)
     last_name = Column(String(64), nullable=True)
-    username = Column(String(64), nullable=False)
+    username = Column(String(64), nullable=True)
 
     email = Column(String(128), nullable=False, unique=True)
     password_hash = Column(String(128), nullable=False)
 
-    role = Column(Enum(UserRole), default=UserRole.Anonymous)
+    role = Column(Enum(UserRole), default=UserRole.Client)
 
     # survey = relationship("Survey", viewonly=True)
 
