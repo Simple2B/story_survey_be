@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from datetime import datetime
-from .user_out import UserOut
 
 
 class SurveyBase(BaseModel):

@@ -4,7 +4,10 @@ from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
     username: Optional[str]
+    email: EmailStr
+    image: Optional[str]
     first_name: Optional[str]
     last_name: Optional[str]
-    email: EmailStr
-    password: str
+    # image_picture: Optional[Image]
+    password: Optional[str]
+    # provider: Optional[bool]

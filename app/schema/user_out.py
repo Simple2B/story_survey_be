@@ -10,6 +10,7 @@ class UserOut(BaseModel):
     email: EmailStr
     created_at: datetime
     role: Optional[enum.Enum]
+    image: Optional[str]
 
     class Config:
         orm_mode = True
