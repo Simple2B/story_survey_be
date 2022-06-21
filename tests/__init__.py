@@ -1,1 +1,1 @@
-from .helper import create_user
+from .helper import create_user  # Noqa F401
