@@ -23,11 +23,12 @@ psycopg2-binary = "^2.9.3"
 alembic = "^1.7.7"
 invoke = "^1.7.1"
 ipython = "^8.3.0"
+black = "^22.3.0"
+SQLAlchemy-ImageAttach = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.9.2"
 pytest = "^6.2.4"
-black = "^21.6b0"
 asynctest = "^0.13.0"
 
 [build-system]
