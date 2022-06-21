@@ -9,7 +9,7 @@ def test_auth(client: TestClient, db: Session):
     # data = {"username": USER_NAME, "email": USER_EMAIL, "password": USER_PASSWORD}
     data = create_user()
     # create new user
-    response = client.post("/backend/user/", json=data.dict())
+    response = client.post("/backend/user/create_user", json=data.dict())
     assert response
 
     new_user = response.json()
@@ -34,6 +34,6 @@ def test_auth(client: TestClient, db: Session):
 
 def test_req_user(client: TestClient, db: Session):
     req_user = create_user()
-    response = client.post("/backend/user/", json=req_user.dict())
+    response = client.post("/backend/user/create_user", json=req_user.dict())
     assert response
     assert response.ok
