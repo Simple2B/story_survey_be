@@ -11,6 +11,7 @@ router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
 @router.get("/", response_model=List[schema.Survey])
 def get_surveys(db: Session = Depends(get_db)):
     surveys = db.query(model.Survey).all()
+    log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
     return surveys
 
 
@@ -42,6 +43,7 @@ def create_survey(
 @router.get("/{id}", response_model=schema.Survey)
 def get_survey(id: int, db: Session = Depends(get_db)):
     survey = db.query(model.Survey).get(id)
+    log(log.INFO, "get_survey: survey [%s]", survey)
     if not survey:
         raise HTTPException(status_code=404, detail="This survey was not found")
     return survey
