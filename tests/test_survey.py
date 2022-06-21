@@ -22,6 +22,7 @@ def test_create_survey(client: TestClient, db: Session):
     assert response and response.ok, "unexpected response"
     token = schema.Token.parse_obj(response.json())
     headers = {"Authorization": f"Bearer {token.access_token}"}
+
     id = new_user["id"]
 
     response = client.get(f"/backend/user/{id}", headers=headers)
@@ -30,16 +31,26 @@ def test_create_survey(client: TestClient, db: Session):
     assert user["username"] == data.username
 
     # create survey for user
-    ID = user["id"]
+    USER_ID = user["id"]
     TITLE = "Survey"
     data = schema.SurveyCreate(
         title=TITLE,
-        user_id=ID,
+        user_id=USER_ID,
     )
 
     response = client.post("/backend/survey/", json=data.dict())
     assert response
+    create_survey = response.json()
+
+    # get survey
+    survey_id = create_survey["id"]
+    response = client.get(f"/backend/survey/{survey_id}")
+    assert response
+    survey = response.json()
+    assert survey["user_id"] == USER_ID
 
     # get surveys
     response = client.get("/backend/survey/")
     assert response
+    surveys = response.json()
+    assert len(surveys) == 1
