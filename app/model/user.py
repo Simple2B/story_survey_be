@@ -38,9 +38,6 @@ class User(Base):
     twitter_id = Column(String(128), nullable=True)
 
     created_at = Column(DateTime(), default=datetime.now)
-
-    first_name = Column(String(64), nullable=True)
-    last_name = Column(String(64), nullable=True)
     username = Column(String(64), nullable=True)
 
     image = Column(String(128), nullable=True)
