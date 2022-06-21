@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -9,7 +10,7 @@ class SurveyBase(BaseModel):
 
 class SurveyCreate(SurveyBase):
     title: str
-    created_at: datetime
+    created_at: Optional[datetime]
     user_id: int
 
 

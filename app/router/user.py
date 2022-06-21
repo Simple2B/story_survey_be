@@ -12,17 +12,6 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
     user = db.query(model.User).filter(model.User.email == n_user.email).first()
 
     if not user:
-        # if n_user.provider:
-        #     user = model.User(
-        #         username=n_user.username,
-        #         email=n_user.email,
-        #         image=n_user.image,
-        #     )
-        #     db.add(user)
-        #     db.commit()
-        #     db.refresh(user)
-        #     return user
-
         user = model.User(**n_user.dict())
         db.add(user)
         db.commit()

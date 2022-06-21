@@ -3,34 +3,40 @@ from typing import List
 from app import model, oauth2, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.logger import log
 
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
 
 
 @router.get("/", response_model=List[schema.Survey])
 def get_surveys(db: Session = Depends(get_db)):
-    pass
-    # surveys = db.query(model.Survey).all()
-    # return surveys
+    surveys = db.query(model.Survey).all()
+    return surveys
 
 
 @router.post("/", status_code=201, response_model=schema.Survey)
 def create_survey(
     survey: schema.SurveyCreate,
     db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user),
+    # current_user: int = Depends(oauth2.get_current_user),
 ):
-    pass
-    # new_survey = model.Survey(
-    #     title=surveys.title,
-    #     created_at=surveys.created_at,
-    #     user_id=current_user.id,
-    # )
-    # db.add(new_survey)
-    # db.commit()
-    # db.refresh(new_survey)
+    user = db.query(model.User).filter(model.User.id == survey.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User with this key not found")
 
-    # return new_survey
+    log(log.INFO, "create_survey: user [%s]", user)
+
+    new_survey = model.Survey(
+        title=survey.title,
+        user_id=survey.user_id,
+    )
+
+    log(log.INFO, "create_survey: new_survey [%s]", new_survey)
+    db.add(new_survey)
+    db.commit()
+    db.refresh(new_survey)
+
+    return new_survey
 
 
 @router.get("/{id}", response_model=schema.Survey)
