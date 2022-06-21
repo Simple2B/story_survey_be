@@ -4,7 +4,7 @@ from app import model, oauth2, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/answer", tags=["Answers"])
+router = APIRouter(prefix="/backend/answer", tags=["Answers"])
 
 
 @router.get("/", response_model=List[schema.Answer])

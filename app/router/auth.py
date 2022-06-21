@@ -7,7 +7,7 @@ from app.database import get_db
 from app.model import User
 from app.oauth2 import create_access_token
 
-router = APIRouter(tags=["Authentication"])
+router = APIRouter(prefix="/backend", tags=["Authentication"])
 
 
 @router.post("/login", response_model=Token)

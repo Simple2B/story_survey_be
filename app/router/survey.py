@@ -4,31 +4,33 @@ from app import model, oauth2, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/survey", tags=["Surveys"])
+router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
 
 
 @router.get("/", response_model=List[schema.Survey])
 def get_surveys(db: Session = Depends(get_db)):
-    surveys = db.query(model.Survey).all()
-    return surveys
+    pass
+    # surveys = db.query(model.Survey).all()
+    # return surveys
 
 
 @router.post("/", status_code=201, response_model=schema.Survey)
 def create_survey(
-    surveys: schema.SurveyCreate,
+    survey: schema.SurveyCreate,
     db: Session = Depends(get_db),
     current_user: int = Depends(oauth2.get_current_user),
 ):
-    new_survey = model.Survey(
-        title=surveys.title,
-        created_at=surveys.created_at,
-        user_id=current_user.id,
-    )
-    db.add(new_survey)
-    db.commit()
-    db.refresh(new_survey)
+    pass
+    # new_survey = model.Survey(
+    #     title=surveys.title,
+    #     created_at=surveys.created_at,
+    #     user_id=current_user.id,
+    # )
+    # db.add(new_survey)
+    # db.commit()
+    # db.refresh(new_survey)
 
-    return new_survey
+    # return new_survey
 
 
 @router.get("/{id}", response_model=schema.Survey)
