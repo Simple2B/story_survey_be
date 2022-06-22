@@ -38,4 +38,4 @@ jobs:
           poetry run flake8 . --count --exit-zero --max-complexity=10 --statistics
       - name: Run FastAPI tests
         run: |
-          poetry run pytest tests/test_auth.py
+          poetry run pytest
