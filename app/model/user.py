@@ -3,7 +3,8 @@ from datetime import datetime
 import enum
 from sqlalchemy import Enum
 from sqlalchemy import Column, Integer, String, DateTime, func, or_
-from sqlalchemy.orm import relationship
+
+# from sqlalchemy_imageattach.entity import Image, image_attachment
 
 from app.hash_utils import make_hash, hash_verify
 from app.database import Base, SessionLocal
@@ -11,6 +12,15 @@ from app.database import Base, SessionLocal
 
 def gen_uuid() -> str:
     return str(uuid4())
+
+
+# class UserPicture(Base, Image):
+#     """User's profile picture."""
+
+#     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+#     user = relationship("User")
+
+#     __tablename__ = "users_picture"
 
 
 class User(Base):
@@ -25,17 +35,18 @@ class User(Base):
     uuid = Column(String(36), default=gen_uuid)
     google_id = Column(String(128), nullable=True)
     facebook_id = Column(String(128), nullable=True)
+    twitter_id = Column(String(128), nullable=True)
 
     created_at = Column(DateTime(), default=datetime.now)
+    username = Column(String(64), nullable=True)
 
-    first_name = Column(String(64), nullable=True)
-    last_name = Column(String(64), nullable=True)
-    username = Column(String(64), nullable=False)
+    image = Column(String(128), nullable=True)
+    # image_picture = image_attachment("UserPicture")
 
     email = Column(String(128), nullable=False, unique=True)
-    password_hash = Column(String(128), nullable=False)
+    password_hash = Column(String(128), nullable=True)
 
-    role = Column(Enum(UserRole), default=UserRole.Anonymous)
+    role = Column(Enum(UserRole), default=UserRole.Client)
 
     # survey = relationship("Survey", viewonly=True)
 

@@ -1,5 +1,4 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -15,7 +14,7 @@ class Question(Base):
 
     survey = relationship("Survey")
 
-    answer = relationship("Answer", viewonly=True)
+    # answer = relationship("Answer", viewonly=True)
 
     def __repr__(self) -> str:
         return f"<{self.id}: {self.title} at {self.created_at}>"

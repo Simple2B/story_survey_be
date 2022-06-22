@@ -1,10 +1,11 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class UserCreate(BaseModel):
     username: Optional[str]
-    first_name: str
-    last_name: str
-    email: EmailStr
-    password: str
+    email: str
+    image: Optional[str]
+    # image_picture: Optional[Image]
+    password: Optional[str]
+    # provider: Optional[bool]

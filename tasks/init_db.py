@@ -22,7 +22,7 @@ def init_db(_, test_data=False):
         username=settings.ADMIN_USER,
         password=settings.ADMIN_PASS,
         email=settings.ADMIN_EMAIL,
-        role=User.UserRole.Admin,
+        role=User.UserRole.Client,
     )
     db.add(admin)
     if test_data:

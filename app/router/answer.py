@@ -4,7 +4,7 @@ from app import model, oauth2, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/answer", tags=["Answers"])
+router = APIRouter(prefix="/backend/answer", tags=["Answers"])
 
 
 @router.get("/", response_model=List[schema.Answer])
@@ -13,21 +13,22 @@ def get_answers(db: Session = Depends(get_db)):
     return answers
 
 
-@router.post("/", status_code=201, response_model=schema.Answer)
+@router.post("/create_answer", status_code=201, response_model=schema.Answer)
 def create_answer(
-    answer_info: schema.AnswerCreate,
+    answer_info: List[schema.AnswerCreate],
     db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user),
+    # current_user: int = Depends(oauth2.get_current_user),
 ):
-    new_answer = model.Answer(
-        answer=answer_info.answer,
-        question_id=answer_info.question_id,
-    )
-    db.add(new_answer)
-    db.commit()
-    db.refresh(new_answer)
+    answer_info
+    # new_answer = model.Answer(
+    #     answer=answer_info.answer,
+    #     question_id=answer_info.question_id,
+    # )
+    # db.add(new_answer)
+    # db.commit()
+    # db.refresh(new_answer)
 
-    return new_answer
+    # return new_answer
 
 
 @router.get("/{id}", response_model=schema.Answer)

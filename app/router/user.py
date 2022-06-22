@@ -3,18 +3,21 @@ from app import model, schema, oauth2
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/user", tags=["Users"])
+router = APIRouter(prefix="/backend/user", tags=["Users"])
 
 
-@router.post("/", status_code=201, response_model=schema.UserOut)
-def create_user(user: schema.UserCreate, db: Session = Depends(get_db)):
+@router.post("/create_user", status_code=201, response_model=schema.UserOut)
+def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
-    new_user = model.User(**user.dict())
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    user = db.query(model.User).filter(model.User.email == n_user.email).first()
 
-    return new_user
+    if not user:
+        user = model.User(**n_user.dict())
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return user
 
 
 @router.get("/{id}", response_model=schema.UserOut)

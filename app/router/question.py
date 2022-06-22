@@ -4,11 +4,11 @@ from app import model, oauth2, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/question", tags=["Questions"])
+router = APIRouter(prefix="/backend/question", tags=["Questions"])
 
 
 @router.get("/", response_model=List[schema.Question])
-def get_question(db: Session = Depends(get_db)):
+def get_questions(db: Session = Depends(get_db)):
     questions = db.query(model.Question).all()
     return questions
 
