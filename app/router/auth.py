@@ -10,11 +10,12 @@ from app.oauth2 import create_access_token
 router = APIRouter(prefix="/backend", tags=["Authentication"])
 
 
-@router.post("/login", response_model=Token)
+@router.post("/user/sign_in", response_model=Token)
 def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
+    user_credentials
     user: User = User.authenticate(
         db,
         user_credentials.username,
