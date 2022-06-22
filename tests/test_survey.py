@@ -33,24 +33,42 @@ def test_create_survey(client: TestClient, db: Session):
     # create survey for user
     USER_ID = user["id"]
     TITLE = "Survey"
+    QUESTIONS = ["Question1", "Question2", "Question3"]
+    EMAIL = user["email"]
     data = schema.SurveyCreate(
-        title=TITLE,
-        user_id=USER_ID,
+        title=TITLE, user_id=USER_ID, questions=QUESTIONS, email=EMAIL
     )
 
-    response = client.post("/backend/survey/", json=data.dict())
+    response = client.post("/backend/survey/create_survey", json=data.dict())
     assert response
     create_survey = response.json()
+    assert create_survey
 
-    # get survey
-    survey_id = create_survey["id"]
-    response = client.get(f"/backend/survey/{survey_id}")
+    # get surveys for user
+    response = client.get(f"/backend/survey/{EMAIL}")
     assert response
     survey = response.json()
-    assert survey["user_id"] == USER_ID
+    assert survey[0]["user_id"] == USER_ID
 
     # get surveys
-    response = client.get("/backend/survey/")
+    response = client.get("/backend/survey/surveys/")
     assert response
     surveys = response.json()
     assert len(surveys) == 1
+
+    questions = surveys[0]["questions"]
+
+    # create answer
+    answerInfo = []
+    for i in range(len(questions)):
+
+        answerInfo.append(
+            {
+                "answer": f"Answer_{i+1}",
+                "question": questions[i],
+                "email": EMAIL,
+            }
+        )
+
+    # response = client.get("/backend/answer/create_answer", json=answerInfo)
+    # assert response
