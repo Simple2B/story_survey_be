@@ -17,7 +17,8 @@ def test_create_survey(client: TestClient, db: Session):
 
     # login by username and password
     response = client.post(
-        "/backend/login", data=dict(username=data.username, password=data.password)
+        "/backend/user/sign_in",
+        data=dict(username=data.username, password=data.password),
     )
     assert response and response.ok, "unexpected response"
     token = schema.Token.parse_obj(response.json())
