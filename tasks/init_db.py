@@ -18,13 +18,15 @@ def init_db(_, test_data=False):
 
     db = SessionLocal()
     # add admin user
-    admin: User = User(
-        username=settings.ADMIN_USER,
-        password=settings.ADMIN_PASS,
-        email=settings.ADMIN_EMAIL,
-        role=User.UserRole.Client,
-    )
-    db.add(admin)
+    admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+    if not admin:
+        admin: User = User(
+            username=settings.ADMIN_USER,
+            password=settings.ADMIN_PASS,
+            email=settings.ADMIN_EMAIL,
+            role=User.UserRole.Admin,
+        )
+        db.add(admin)
     if test_data:
         # Add test data
         fill_test_data(db)
