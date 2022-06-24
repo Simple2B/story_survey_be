@@ -33,18 +33,13 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid)
-    google_id = Column(String(128), nullable=True)
-    facebook_id = Column(String(128), nullable=True)
-    twitter_id = Column(String(128), nullable=True)
-
     created_at = Column(DateTime(), default=datetime.now)
-    username = Column(String(64), nullable=True)
+    username = Column(String(), nullable=True)
 
-    image = Column(String(128), nullable=True)
+    image = Column(String(), nullable=True)
     # image_picture = image_attachment("UserPicture")
-
-    email = Column(String(128), nullable=False, unique=True)
-    password_hash = Column(String(128), nullable=True)
+    email = Column(String(), nullable=False, unique=True)
+    password_hash = Column(String(), nullable=True)
 
     role = Column(Enum(UserRole), default=UserRole.Client)
 
