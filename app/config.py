@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DEV_DATABASE_URI: str = "sqlite:///./test.db"
     ADMIN_USER: str = "admin"
     ADMIN_PASS: str = "admin"
-    ADMIN_EMAIL: EmailStr = "admin@admin.com"
+    ADMIN_EMAIL: EmailStr = "vsabybina7@gmail.com"
 
     class Config:
         env_file = ".env"
