@@ -1,8 +1,8 @@
-"""create models
+"""init db
 
-Revision ID: 24ed2f337b34
+Revision ID: 02747d495e31
 Revises: 
-Create Date: 2022-06-10 10:58:53.122956
+Create Date: 2022-06-24 15:34:27.226191
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '24ed2f337b34'
+revision = '02747d495e31'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,20 +22,19 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.String(length=36), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('first_name', sa.String(length=64), nullable=False),
-    sa.Column('last_name', sa.String(length=64), nullable=False),
-    sa.Column('username', sa.String(length=64), nullable=False),
-    sa.Column('email', sa.String(length=128), nullable=False),
-    sa.Column('password_hash', sa.String(length=128), nullable=False),
+    sa.Column('username', sa.String(), nullable=True),
+    sa.Column('image', sa.String(), nullable=True),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('password_hash', sa.String(), nullable=True),
     sa.Column('role', sa.Enum('Admin', 'Client', 'Anonymous', name='userrole'), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('email')
     )
     op.create_table('surveys',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=128), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('published', sa.Boolean(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')

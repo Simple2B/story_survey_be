@@ -12,4 +12,16 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "database": "survey",
+            "username": "postgres",
+            "password": "jgkykufyu56774349KGvt",
+            "name": "survey"
+        }
+    ],
 }

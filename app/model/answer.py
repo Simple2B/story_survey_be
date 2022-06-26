@@ -17,4 +17,4 @@ class Answer(Base):
     question = relationship("Question")
 
     def __repr__(self) -> str:
-        return f"<{self.id}: {self.title} at {self.created_at}>"
+        return f"<{self.id}: {self.answer} at {self.created_at}>"
