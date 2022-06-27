@@ -14,7 +14,7 @@ class Survey(Base):
     __tablename__ = "surveys"
 
     id = Column(Integer, primary_key=True)
-    uuid = Column(String(36), default=gen_uuid)
+    uuid = Column(String(36), default=gen_uuid, nullable=True)
     title = Column(String(128), nullable=False)
     description = Column(String(), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
