@@ -1,6 +1,7 @@
+import re
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
-from app import model, oauth2, schema
+from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
@@ -26,8 +27,10 @@ def get_surveys(db: Session = Depends(get_db)):
         surveys_with_question.append(
             {
                 "id": survey.id,
+                "uuid": survey.uuid,
+                "description": survey.description,
                 "title": survey.title,
-                "created_at": survey.created_at,
+                "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "user_id": survey.user_id,
                 "email": survey.user.email,
                 "questions": questions,
@@ -64,10 +67,13 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
             {
                 "id": survey.id,
                 "title": survey.title,
-                "created_at": survey.created_at,
+                "description": survey.description,
+                "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "user_id": survey.user_id,
                 "email": user.email,
-                "questions": [item.question for item in questions],
+                "questions": [
+                    {"id": item.id, "question": item.question} for item in questions
+                ],
             }
         )
 
@@ -82,12 +88,14 @@ def create_survey(
 ):
     user = db.query(model.User).filter(model.User.email == survey.email).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User with this key not found")
+        log(log.ERROR, "User with this key not found")
+        return
 
     log(log.INFO, "create_survey: user [%s]", user)
 
     new_survey: model.Survey = model.Survey(
         title=survey.title,
+        description=survey.description,
         user_id=user.id,
     )
     db.add(new_survey)
@@ -109,16 +117,42 @@ def create_survey(
 
         log(log.INFO, "create_survey: questions [%d] created", len(survey.questions))
 
-    return new_survey
+    return {
+        "id": new_survey.id,
+        "uuid": new_survey.uuid,
+        "title": new_survey.title,
+        "description": new_survey.description,
+        "created_at": new_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": new_survey.user_id,
+        # "email": user.email,
+        # "questions": Optional[List],
+    }
 
 
-@router.get("/{id}", response_model=schema.Survey)
-def get_survey(id: int, db: Session = Depends(get_db)):
-    survey = db.query(model.Survey).get(id)
-    log(log.INFO, "get_survey: survey [%s]", survey)
+@router.get("/get_survey/{id}", response_model=schema.Survey)
+def get_survey(id: str, db: Session = Depends(get_db)):
+    survey_id = int(re.search(r"\d+", id).group())
+    survey = db.query(model.Survey).get(survey_id)
+
     if not survey:
         raise HTTPException(status_code=404, detail="This survey was not found")
-    return survey
+
+    log(log.INFO, "get_survey: survey [%s]", survey)
+    questions = (
+        db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
+    )
+    log(log.INFO, "get_survey: questions [%s]", questions)
+
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "email": survey.user.email,
+        "questions": questions,
+    }
 
 
 @router.post("/delete_survey", status_code=204)
@@ -152,6 +186,16 @@ def delete_survey(
                     (model.Question.survey_id == del_survey.id)
                 )
 
+                for question in questions.all():
+                    answer = db.query(model.Answer).filter(
+                        (model.Answer.question_id == question.id)
+                    )
+                    log(
+                        log.INFO, "delete_survey:  answer count [%d]", len(answer.all())
+                    )
+                    answer.delete(synchronize_session=False)
+                    db.commit()
+                    log(log.INFO, "delete_survey:  answer deleted")
                 questions.delete(synchronize_session=False)
                 db.commit()
                 # db.refresh()
@@ -166,24 +210,70 @@ def delete_survey(
                 log(log.INFO, "delete_survey:  survey deleted")
 
                 return Response(status_code=204)
+    return
 
 
-@router.put("/{id}", response_model=schema.Survey)
+@router.put("/update/{id}", response_model=schema.Survey)
 def update_survey(
     id: int,
     survey: schema.SurveyCreate,
     db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user),
+    # current_user: int = Depends(oauth2.get_current_user),
 ):
+    user = db.query(model.User).filter(model.User.email == survey.email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User with this key not found")
+
     updated_survey = db.query(model.Survey).filter_by(id=id)
+    # update_question
 
     if not updated_survey.first():
         raise HTTPException(status_code=404, detail="This survey was not found")
 
-    if updated_survey.first().user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    edit_survey = updated_survey.first()
 
-    updated_survey.update(survey.dict(), synchronize_session=False)
+    updated_questions = (
+        db.query(model.Question)
+        .filter(model.Question.survey_id == edit_survey.id)
+        .all()
+    )
+    new_questions = survey.questions
+
+    for item in new_questions:
+        for updated_question in updated_questions:
+            if updated_question.id == item["id"]:
+                updated_question.question = item["question"]
+                updated_question.survey_id = edit_survey.id
+                db.commit()
+
+    data_edit_survey = {
+        "title": survey.title,
+        "description": survey.description,
+        "user_id": user.id,
+    }
+
+    # if updated_survey.first().user_id != current_user.id:
+    #     raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    updated_survey.update(data_edit_survey, synchronize_session=False)
     db.commit()
 
-    return updated_survey.first()
+    data_survey = updated_survey.first()
+    new_questions = (
+        db.query(model.Question)
+        .filter(model.Question.survey_id == data_survey.id)
+        .all()
+    )
+
+    new_data_survey = {
+        "created_at": data_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "description": data_survey.description,
+        "email": user.email,
+        "id": data_survey.id,
+        "questions": new_questions,
+        "title": data_survey.title,
+        "user_id": user.id,
+    }
+
+    return new_data_survey
