@@ -16,7 +16,7 @@ class Survey(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid, nullable=True)
     title = Column(String(128), nullable=False)
-    description = Column(String(), nullable=True)
+    description = Column(String(256), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
     published = Column(Boolean, default=True)
 
