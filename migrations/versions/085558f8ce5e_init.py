@@ -1,8 +1,8 @@
-"""init db
+"""init
 
-Revision ID: 02747d495e31
+Revision ID: 085558f8ce5e
 Revises: 
-Create Date: 2022-06-24 15:34:27.226191
+Create Date: 2022-06-28 14:52:49.911812
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '02747d495e31'
+revision = '085558f8ce5e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,17 +22,20 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.String(length=36), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('username', sa.String(), nullable=True),
-    sa.Column('image', sa.String(), nullable=True),
-    sa.Column('email', sa.String(), nullable=False),
-    sa.Column('password_hash', sa.String(), nullable=True),
-    sa.Column('role', sa.Enum('Admin', 'Client', 'Anonymous', name='userrole'), nullable=True),
+    sa.Column('username', sa.String(length=256), nullable=True),
+    sa.Column('image', sa.String(length=256), nullable=True),
+    sa.Column('email', sa.String(length=256), nullable=False),
+    sa.Column('password_hash', sa.String(length=256), nullable=True),
+    sa.Column('role', sa.Enum('Admin', 'Client', name='userrole'), nullable=True),
+    sa.Column('subscription', sa.Enum('Basic', 'Advance', name='subscription'), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
     op.create_table('surveys',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('uuid', sa.String(length=36), nullable=True),
     sa.Column('title', sa.String(length=128), nullable=False),
+    sa.Column('description', sa.String(length=256), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('published', sa.Boolean(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
@@ -41,14 +44,14 @@ def upgrade():
     )
     op.create_table('questions',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('question', sa.String(length=128), nullable=False),
+    sa.Column('question', sa.String(length=256), nullable=False),
     sa.Column('survey_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['survey_id'], ['surveys.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('answers',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('answer', sa.String(length=128), nullable=False),
+    sa.Column('answer', sa.String(length=256), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('question_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
