@@ -19,6 +19,10 @@ class User(Base):
         Admin = "Admin"
         Client = "Client"
 
+    class Subscription(enum.Enum):
+        Basic = "Basic"
+        Advance = "Advance"
+
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid)
     created_at = Column(DateTime(), default=datetime.now)
@@ -29,6 +33,7 @@ class User(Base):
     password_hash = Column(String(256), nullable=True)
 
     role = Column(Enum(UserRole), default=UserRole.Client)
+    subscription = Column(Enum(Subscription), default=Subscription.Basic)
 
     @property
     def password(self):
