@@ -84,7 +84,6 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
 def create_survey(
     survey: schema.SurveyCreate,
     db: Session = Depends(get_db),
-    # current_user: int = Depends(oauth2.get_current_user),
 ):
     user = db.query(model.User).filter(model.User.email == survey.email).first()
     if not user:
@@ -124,8 +123,6 @@ def create_survey(
         "description": new_survey.description,
         "created_at": new_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": new_survey.user_id,
-        # "email": user.email,
-        # "questions": Optional[List],
     }
 
 
@@ -159,7 +156,6 @@ def get_survey(id: str, db: Session = Depends(get_db)):
 def delete_survey(
     data: schema.SurveyDelete,
     db: Session = Depends(get_db),
-    # current_user: int = Depends(oauth2.get_current_user),
 ):
     user = db.query(model.User).filter(model.User.email == data.email).first()
 

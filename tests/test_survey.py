@@ -66,10 +66,104 @@ def test_create_survey(client: TestClient, db: Session):
         answerInfo.append(
             {
                 "answer": f"Answer_{i+1}",
-                "question": questions[i],
+                "question": {
+                    "id": questions[i]["id"],
+                    "survey_id": questions[i]["survey_id"],
+                    "question": questions[i]["question"],
+                },
                 "email": EMAIL,
             }
         )
 
-    # response = client.get("/backend/answer/create_answer", json=answerInfo)
-    # assert response
+    response = client.post("/backend/answer/create_answer", json=answerInfo)
+    assert response
+    answers = response.json()
+    assert answers
+    assert len(answers) == 3
+
+
+def test_get_surveys(client: TestClient, db: Session):
+    data = create_user("Poll", "test@test.ku")
+    # create new user
+    response = client.post("/backend/user/create_user", json=data.dict())
+    assert response
+    user = response.json()
+
+    # create survey with question
+    info_survey = {
+        "title": "Title",
+        "description": "Description",
+        "user_id": user["id"],
+        "email": user["email"],
+        "questions": [
+            "Question_1",
+            "Question_2",
+            "Question_3",
+            "Question_4",
+            "Question_5",
+        ],
+    }
+
+    response = client.post("/backend/survey/create_survey", json=info_survey)
+    assert response
+    survey = response.json()
+    assert survey["user_id"] == user["id"]
+
+    data_user2 = create_user("Stive", "stive@test.ku")
+    # create new user
+    response = client.post("/backend/user/create_user", json=data_user2.dict())
+    assert response
+    user2 = response.json()
+
+    # create surveys with question
+    surveys = []
+    for i in range(5):
+        surveys.append(
+            {
+                "title": f"Title_{i}",
+                "description": f"Description_{i}",
+                "user_id": user2["id"],
+                "email": user2["email"],
+                "questions": [
+                    f"Question_1_Title_{i}",
+                    f"Question_2_Title_{i}",
+                    f"Question_3_Title_{i}",
+                    f"Question_4_Title_{i}",
+                    f"Question_5_Title_{i}",
+                ],
+            }
+        )
+    if len(surveys) > 0:
+        for survey in surveys:
+            response = client.post("/backend/survey/create_survey", json=survey)
+            assert response
+
+    # get all surveys
+    response = client.get("/backend/survey/surveys")
+    assert response
+    all_surveys = response.json()
+    assert len(all_surveys) == 6
+
+    email = user2["email"]
+
+    # get surveys for user
+    response = client.get(f"/backend/survey/{email}")
+    assert response
+    user_surveys = response.json()
+    assert len(user_surveys) == 5
+
+    survey_to_delete = {
+        "survey_id": user_surveys[0]["id"],
+        "email": email,
+    }
+
+    # delete survey
+    response = client.post("/backend/survey/delete_survey", json=survey_to_delete)
+    assert response
+    assert response.status_code == 204
+
+    # get surveys user after deleted 1 survey
+    response = client.get(f"/backend/survey/{email}")
+    assert response
+    user_surveys = response.json()
+    assert len(user_surveys) == 4

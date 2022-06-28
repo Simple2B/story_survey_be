@@ -1,9 +1,9 @@
 from app import schema
 
 
-def create_user():
-    USER_NAME = "VASYL"
-    USER_EMAIL = "test@test.ku"
+def create_user(name: str = "Poll", email: str = "test@test.ku"):
+    USER_NAME = name
+    USER_EMAIL = email
     USER_PASSWORD = "secret"
     data = schema.UserCreate(
         username=USER_NAME,

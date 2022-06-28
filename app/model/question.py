@@ -8,7 +8,7 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True)
-    question = Column(String(128), nullable=False)
+    question = Column(String(256), nullable=False)
 
     survey_id = Column(Integer, ForeignKey("surveys.id"))
 
