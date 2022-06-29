@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app import schema
-from app.config import settings
+# from app import schema
+# from app.config import settings
 
 
 def test_stripe_callback(client: TestClient, db: Session):
