@@ -1,7 +1,5 @@
 import stripe
-from fastapi import Depends, APIRouter, status
-from fastapi.responses import RedirectResponse
-from typing import List
+from fastapi import Depends, APIRouter
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
