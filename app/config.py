@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     ADMIN_PASS: str = "admin"
     ADMIN_EMAIL: EmailStr = "vsabybina7@gmail.com"
 
+    STRIPE_PUBLIC_KEY: str = "pk_secret"
+    STRIPE_SECRET_KEY: str = "sk_secret"
+    BASIC_PRICE_LOOKUP_KEY: str = "basic_product_price_key"
+    ADVANCE_PRICE_LOOKUP_KEY: str = "advance_product_price_key"
+
     class Config:
         env_file = ".env"
 
