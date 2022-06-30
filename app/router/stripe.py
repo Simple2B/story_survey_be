@@ -47,11 +47,18 @@ def create_stripe_session(
 
     product_key = None
     if stripe_data.advance_product_key:
-        user.subscription = model.User.Subscription.Advance
-        product_key = stripe_data.advance_product_key
+        stripe_model = model.Stripe(subscription=model.Stripe.SubscriptionType.Advance)
     else:
-        user.subscription = model.User.Subscription.Basic
-        product_key = stripe_data.basic_product_key
+        stripe_model = model.Stripe(subscription=model.Stripe.SubscriptionType.Basic)
+
+    db.add(stripe_model)
+    db.commit()
+    db.refresh(stripe_model)
+
+    user.stripe_data_id = stripe_model.id
+    product_key = stripe_data.basic_product_key
+    db.commit()
+    db.refresh(user)
 
     # success_url=
     # cancel_url=
@@ -76,10 +83,10 @@ def create_stripe_session(
             cancel_url=SERVER_HOST + "/user_profile/user" + "?canceled=true",
         )
 
-        user.stripe_customer = customer.stripe_id
-        user.stripe_session_id = checkout_session.stripe_id
+        stripe_model.stripe_customer_id = customer.stripe_id
+        stripe_model.stripe_session_id = checkout_session.stripe_id
         db.commit()
-        db.refresh(user)
+        db.refresh(stripe_model)
 
         session_data = {
             "stripe_session_id": checkout_session.stripe_id,

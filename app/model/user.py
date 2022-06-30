@@ -1,7 +1,7 @@
 from uuid import uuid4
 from datetime import datetime
 import enum
-from sqlalchemy import Enum
+from sqlalchemy import Enum, ForeignKey
 from sqlalchemy import Column, Integer, String, DateTime, func, or_
 
 from app.hash_utils import make_hash, hash_verify
@@ -19,10 +19,6 @@ class User(Base):
         Admin = "Admin"
         Client = "Client"
 
-    class Subscription(enum.Enum):
-        Basic = "Basic"
-        Advance = "Advance"
-
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid)
     created_at = Column(DateTime(), default=datetime.now)
@@ -35,9 +31,7 @@ class User(Base):
 
     role = Column(Enum(UserRole), default=UserRole.Client)
 
-    stripe_customer = Column(String(256), nullable=True)
-    stripe_session_id = Column(String(256), nullable=True)
-    subscription = Column(Enum(Subscription), nullable=True)
+    stripe_data_id = Column(Integer, ForeignKey("stripe_data.id"))
 
     @property
     def password(self):
