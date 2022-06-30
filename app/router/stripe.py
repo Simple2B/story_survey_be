@@ -45,30 +45,56 @@ def create_stripe_session(
 
     log(log.INFO, "get_user_surveys: user [%s]", user)
 
-    lookup_key = stripe_data.key
+    product_key = None
+    if stripe_data.advance_product_key:
+        user.subscription = model.User.Subscription.Advance
+        product_key = stripe_data.advance_product_key
+    else:
+        user.subscription = model.User.Subscription.Basic
+        product_key = stripe_data.basic_product_key
+
     # success_url=
     # cancel_url=
     try:
         # prices = stripe.Price.list(lookup_keys=[lookup_key], expand=["data.product"])
-
+        customer = stripe.Customer.create(
+            email=stripe_data.email,
+            description="My First Test Customer",
+        )
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
-                    "price": lookup_key,
+                    "price": product_key,
                     "quantity": 1,
                 },
             ],
+            customer_email=stripe_data.email,
             mode="subscription",
             success_url=SERVER_HOST
             + "/user_profile/user"
             + "?success=true&session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=SERVER_HOST + "?canceled=true",
+            cancel_url=SERVER_HOST + "/user_profile/user" + "?canceled=true",
         )
-        return checkout_session.url
-        # return redirect(checkout_session.url, code=303)
+
+        user.stripe_customer = customer.stripe_id
+        user.stripe_session_id = checkout_session.stripe_id
+        db.commit()
+        db.refresh(user)
+
+        session_data = {
+            "stripe_session_id": checkout_session.stripe_id,
+            "checkout_session_url": checkout_session.url,
+        }
+
+        return session_data
     except Exception as e:
         print(e)
         return "Server error", 500
+
+
+@router.get("/stripe_session/{email}")
+def get_stripe_session(email: str, db: Session = Depends(get_db)):
+    email
 
 
 @router.post("/create_portal_session")
