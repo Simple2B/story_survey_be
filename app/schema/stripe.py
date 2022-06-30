@@ -7,6 +7,7 @@ class Stripe(BaseModel):
 
 
 class CreateCustomer(Stripe):
+    email: str
     stripe_customer: str
 
 

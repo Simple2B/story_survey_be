@@ -3,6 +3,7 @@ from datetime import datetime
 import enum
 from sqlalchemy import Enum, ForeignKey
 from sqlalchemy import Column, Integer, String, DateTime, func, or_
+from sqlalchemy.orm import relationship
 
 from app.hash_utils import make_hash, hash_verify
 from app.database import Base, SessionLocal
@@ -31,7 +32,10 @@ class User(Base):
 
     role = Column(Enum(UserRole), default=UserRole.Client)
 
-    stripe_data_id = Column(Integer, ForeignKey("stripe_data.id"))
+    stripe_data_id = Column(Integer, ForeignKey("stripe_data.id"), nullable=True)
+
+    stripe_data = relationship("Stripe")
+    session = relationship("Session", viewonly=True)
 
     @property
     def password(self):

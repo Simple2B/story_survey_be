@@ -13,8 +13,10 @@ class Answer(Base):
     created_at = Column(DateTime(), default=datetime.now)
 
     question_id = Column(Integer, ForeignKey("questions.id"))
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=True)
 
     question = relationship("Question")
+    session = relationship("Session")
 
     def __repr__(self) -> str:
         return f"<{self.id}: {self.answer} at {self.created_at}>"

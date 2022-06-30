@@ -26,6 +26,29 @@ def get_stripe_key():
     return data
 
 
+@router.post("/create_customer", response_model=schema.UserOut)
+def create_stripe_customer(data: schema.CreateCustomer, db: Session = Depends(get_db)):
+
+    user = db.query(model.User).filter(model.User.email == data.email).first()
+
+    if not user:
+        user = model.User(email=data.email)
+
+    log(log.INFO, "get_user_surveys: user [%s]", user)
+
+    stripe_model = model.Stripe(stripe_customer_id=data.stripe_customer)
+    db.add(stripe_model)
+    db.commit()
+    db.refresh(stripe_model)
+
+    user.stripe_data_id = stripe_model.id
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
 @router.post("/session")
 def create_stripe_session(
     stripe_data: schema.StripeData, db: Session = Depends(get_db)
