@@ -30,10 +30,14 @@ class User(Base):
 
     image = Column(String(256), nullable=True)
     email = Column(String(256), nullable=False, unique=True)
+
     password_hash = Column(String(256), nullable=True)
 
     role = Column(Enum(UserRole), default=UserRole.Client)
-    subscription = Column(Enum(Subscription), default=Subscription.Basic)
+
+    stripe_customer = Column(String(256), nullable=True)
+    stripe_session_id = Column(String(256), nullable=True)
+    subscription = Column(Enum(Subscription), nullable=True)
 
     @property
     def password(self):
