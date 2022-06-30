@@ -8,9 +8,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     DATABASE_URI: str = ""
     DEV_DATABASE_URI: str = "sqlite:///./test.db"
+
     ADMIN_USER: str = "admin"
     ADMIN_PASS: str = "admin"
     ADMIN_EMAIL: EmailStr = "vsabybina7@gmail.com"
+
+    ADMIN2_USER: str = "admin"
+    ADMIN2_PASS: str = "admin"
+    ADMIN2_EMAIL: EmailStr = "steve@pogol.net"
 
     STRIPE_PUBLIC_KEY: str = "pk_secret"
     STRIPE_SECRET_KEY: str = "sk_secret"
