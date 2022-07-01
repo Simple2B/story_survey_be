@@ -7,13 +7,21 @@ class Stripe(BaseModel):
 
 
 class CreateCustomer(Stripe):
+    email: str
     stripe_customer: str
+
+
+class CreateStripeSession(Stripe):
+    email: str
+    subscription_id: str
 
 
 class StripeData(Stripe):
     email: str
-    basic_product_key: Optional[str]
     advance_product_key: Optional[str]
+    base_product_key: Optional[str]
+    stripe_customer: str
+    stripe_session_id: str
 
 
 class StripePortal(Stripe):

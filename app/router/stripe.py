@@ -16,6 +16,20 @@ SERVER_HOST = "http://localhost:3000"
 # http://localhost:3000/user_profile/user
 
 
+@router.post("/create_customer")
+def stripe_create_customer(
+    stripe_data: schema.CreateCustomer, db: Session = Depends(get_db)
+):
+    stripe_data
+
+
+@router.post("/save_session")
+def stripe_save_session(
+    stripe_data: schema.CreateStripeSession, db: Session = Depends(get_db)
+):
+    stripe_data
+
+
 @router.post("/get_key")
 def get_stripe_key():
     data = {
@@ -43,50 +57,28 @@ def create_stripe_session(
         db.commit()
         db.refresh(user)
 
+    stripe_user = (
+        db.query(model.User)
+        .filter(model.User.stripe_customer == stripe_data.stripe_customer)
+        .first()
+    )
+
+    if stripe_user:
+        return stripe_user
+
     log(log.INFO, "get_user_surveys: user [%s]", user)
-
-    product_key = None
-    if stripe_data.advance_product_key:
-        user.subscription = model.User.Subscription.Advance
-        product_key = stripe_data.advance_product_key
-    else:
-        user.subscription = model.User.Subscription.Basic
-        product_key = stripe_data.basic_product_key
-
-    # success_url=
-    # cancel_url=
     try:
-        # prices = stripe.Price.list(lookup_keys=[lookup_key], expand=["data.product"])
-        customer = stripe.Customer.create(
-            email=stripe_data.email,
-            description="My First Test Customer",
-        )
-        checkout_session = stripe.checkout.Session.create(
-            line_items=[
-                {
-                    "price": product_key,
-                    "quantity": 1,
-                },
-            ],
-            customer_email=stripe_data.email,
-            mode="subscription",
-            success_url=SERVER_HOST
-            + "/user_profile/user"
-            + "?success=true&session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=SERVER_HOST + "/user_profile/user" + "?canceled=true",
-        )
+        if stripe_data.advance_product_key:
+            stripe_user.subscription = model.User.Subscription.Advance
+        else:
+            stripe_user.subscription = model.User.Subscription.Basic
 
-        user.stripe_customer = customer.stripe_id
-        user.stripe_session_id = checkout_session.stripe_id
+        stripe_user.stripe_customer = stripe_data.stripe_customer
+        stripe_user.stripe_session_id = stripe_data.stripe_session_id
         db.commit()
         db.refresh(user)
 
-        session_data = {
-            "stripe_session_id": checkout_session.stripe_id,
-            "checkout_session_url": checkout_session.url,
-        }
-
-        return session_data
+        return stripe_user
     except Exception as e:
         print(e)
         return "Server error", 500
