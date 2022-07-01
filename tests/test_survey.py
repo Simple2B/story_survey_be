@@ -6,6 +6,8 @@ from .helper import create_user
 
 
 def test_create_survey(client: TestClient, db: Session):
+    """Test for create_survey() function from router/survey.py"""
+
     data = create_user()
     # create new user
     response = client.post("/backend/user/create_user", json=data.dict())
@@ -83,6 +85,8 @@ def test_create_survey(client: TestClient, db: Session):
 
 
 def test_get_surveys(client: TestClient, db: Session):
+    """Test for get_surveys() function from router/survey.py"""
+
     data = create_user("Poll", "test@test.ku")
     # create new user
     response = client.post("/backend/user/create_user", json=data.dict())
