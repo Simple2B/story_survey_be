@@ -7,3 +7,4 @@ from .survey import Survey, SurveyCreate, SurveyDelete
 from .question import Question, QuestionCreate
 from .answer import Answer, AnswerCreate
 from .stripe import StripeData, StripePortal, CreateCustomer
+from .history import History
