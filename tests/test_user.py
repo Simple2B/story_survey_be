@@ -26,8 +26,8 @@ def test_auth(client: TestClient, db: Session):
     headers = {"Authorization": f"Bearer {token.access_token}"}
 
     # get user by id
-    id = new_user["id"]
-    response = client.get(f"/backend/user/{id}", headers=headers)
+    email = new_user["email"]
+    response = client.get(f"/backend/user/{email}", headers=headers)
     assert response and response.ok
     user = response.json()
     assert user["username"] == data.username

@@ -24,9 +24,9 @@ def test_create_survey(client: TestClient, db: Session):
     token = schema.Token.parse_obj(response.json())
     headers = {"Authorization": f"Bearer {token.access_token}"}
 
-    id = new_user["id"]
+    email = new_user["email"]
 
-    response = client.get(f"/backend/user/{id}", headers=headers)
+    response = client.get(f"/backend/user/{email}", headers=headers)
     assert response and response.ok
     user = response.json()
     assert user["username"] == data.username
