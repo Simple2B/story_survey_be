@@ -1,6 +1,6 @@
 import enum
 from sqlalchemy import Enum
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -14,12 +14,14 @@ class Stripe(Base):
         Advance = "Advance"
 
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    stripe_customer_id = Column(String(256), nullable=True)
-    stripe_session_id = Column(String(256), nullable=True)
+    customer_id = Column(String(256), nullable=True)
+    session_id = Column(String(256), nullable=True)
     subscription = Column(Enum(SubscriptionType), nullable=True)
+    product_id = Column(String(256), nullable=True)
 
-    user = relationship("User", viewonly=True)
+    user = relationship("User")
 
     def __repr__(self) -> str:
         return f"<{self.id}: customer id {self.stripe_customer_id}>"

@@ -32,11 +32,6 @@ class User(Base):
 
     role = Column(Enum(UserRole), default=UserRole.Client)
 
-    stripe_data_id = Column(Integer, ForeignKey("stripe_data.id"), nullable=True)
-
-    stripe_data = relationship("Stripe")
-    session = relationship("Session", viewonly=True)
-
     @property
     def password(self):
         return self.password_hash

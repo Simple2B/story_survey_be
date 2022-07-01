@@ -11,7 +11,10 @@ class UserOut(BaseModel):
     created_at: datetime
     role: Optional[enum.Enum]
     image: Optional[str]
-    stripe_data_id: Optional[int]
+    customer_id: Optional[str]
+    session_id: Optional[str]
+    subscription: Optional[enum.Enum]
+    product_id: Optional[str]
 
     class Config:
         orm_mode = True

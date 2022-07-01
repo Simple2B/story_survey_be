@@ -16,7 +16,7 @@ class Answer(Base):
     session_id = Column(Integer, ForeignKey("sessions.id"), nullable=True)
 
     question = relationship("Question")
-    session = relationship("Session")
+    session = relationship("SessionNext")
 
     def __repr__(self) -> str:
         return f"<{self.id}: {self.answer} at {self.created_at}>"
