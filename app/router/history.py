@@ -1,8 +1,7 @@
-from fastapi import HTTPException, Depends, APIRouter
+from fastapi import Depends, APIRouter
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
-from typing import List
 
 router = APIRouter(prefix="/backend/history", tags=["History"])
 

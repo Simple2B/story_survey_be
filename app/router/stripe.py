@@ -2,8 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
-from app.config import settings
-from app.logger import log
+
 
 router = APIRouter(prefix="/backend/stripe", tags=["Stripe"])
 

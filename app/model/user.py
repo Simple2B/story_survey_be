@@ -1,9 +1,8 @@
 from uuid import uuid4
 from datetime import datetime
 import enum
-from sqlalchemy import Enum, ForeignKey
+from sqlalchemy import Enum
 from sqlalchemy import Column, Integer, String, DateTime, func, or_
-from sqlalchemy.orm import relationship
 
 from app.hash_utils import make_hash, hash_verify
 from app.database import Base, SessionLocal
