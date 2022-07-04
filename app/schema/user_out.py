@@ -1,7 +1,10 @@
 import enum
+from typing import List
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+
+from .survey import Survey
 
 
 class UserOut(BaseModel):
@@ -16,6 +19,7 @@ class UserOut(BaseModel):
     subscription: Optional[enum.Enum]
     subscription_id: Optional[str]
     product_id: Optional[str]
+    surveys: Optional[List[Survey]]
 
     class Config:
         orm_mode = True

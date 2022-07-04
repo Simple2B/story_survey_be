@@ -14,6 +14,7 @@ def get_users(db: Session = Depends(get_db)):
     users = db.query(model.User).all()
     log(log.INFO, f"get_users: number of users {len(users)}")
     if len(users) > 0:
+
         return [
             {
                 "id": user.id,
@@ -22,6 +23,11 @@ def get_users(db: Session = Depends(get_db)):
                 "created_at": user.created_at,
                 "role": user.role,
                 "image": user.image,
+                "surveys": [
+                    get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+                ]
+                if len(get_surveys_for_user(user, db)) > 0
+                else [],
             }
             for user in users
         ]
@@ -45,7 +51,25 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.get("/{email}", response_model=schema.UserOut)
+@router.get("/id/{id}", response_model=schema.UserOut)
+def get_user_by_id(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    user = db.query(model.User).get(int(id))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+
+    if not stripe_info:
+        return get_info_user(user, db)
+
+    return get_user_with_stripe_info(user, stripe_info, db)
+
+
+@router.get("/email/{email}", response_model=schema.UserOut)
 def get_user(
     email: str,
     db: Session = Depends(get_db),
@@ -61,15 +85,47 @@ def get_user(
     log(log.INFO, f"get_user: stripe info exists: {bool(stripe_info)}")
 
     if not stripe_info:
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "created_at": user.created_at,
-            "role": user.role,
-            "image": user.image,
-        }
+        return get_info_user(user, db)
 
+    return get_user_with_stripe_info(user, stripe_info, db)
+
+
+# helper functions
+
+
+def get_surveys_for_user(user, db):
+    return db.query(model.Survey).filter(model.Survey.user_id == user.id).all()
+
+
+def get_survey_info(survey: schema.Survey):
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "questions": survey.questions,
+    }
+
+
+def get_info_user(user, db):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "created_at": user.created_at,
+        "role": user.role,
+        "image": user.image,
+        "surveys": [
+            get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+        ]
+        if len(get_surveys_for_user(user, db)) > 0
+        else [],
+    }
+
+
+def get_user_with_stripe_info(user, stripe_info, db):
     return {
         "id": user.id,
         "username": user.username,
@@ -82,4 +138,9 @@ def get_user(
         "subscription": stripe_info.subscription,
         "subscription_id": stripe_info.subscription_id,
         "product_id": stripe_info.product_id,
+        "surveys": [
+            get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+        ]
+        if len(get_surveys_for_user(user, db)) > 0
+        else [],
     }

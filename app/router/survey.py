@@ -34,6 +34,9 @@ def get_surveys(db: Session = Depends(get_db)):
                 "user_id": survey.user_id,
                 "email": survey.user.email,
                 "questions": questions,
+                "successful_message": survey.successful_message
+                if survey.successful_message
+                else "",
             }
         )
 
@@ -74,6 +77,9 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "questions": [
                     {"id": item.id, "question": item.question} for item in questions
                 ],
+                "successful_message": survey.successful_message
+                if survey.successful_message
+                else "",
             }
         )
 
@@ -95,6 +101,7 @@ def create_survey(
     new_survey: model.Survey = model.Survey(
         title=survey.title,
         description=survey.description,
+        successful_message=survey.successful_message,
         user_id=user.id,
     )
     db.add(new_survey)
@@ -121,6 +128,7 @@ def create_survey(
         "uuid": new_survey.uuid,
         "title": new_survey.title,
         "description": new_survey.description,
+        "successful_message": new_survey.successful_message,
         "created_at": new_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": new_survey.user_id,
         "questions": new_survey.questions,
@@ -146,6 +154,7 @@ def get_survey(id: str, db: Session = Depends(get_db)):
         "uuid": survey.uuid,
         "title": survey.title,
         "description": survey.description,
+        "successful_message": survey.successful_message,
         "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": survey.user_id,
         "email": survey.user.email,
@@ -248,6 +257,7 @@ def update_survey(
     data_edit_survey = {
         "title": survey.title,
         "description": survey.description,
+        "successful_message": survey.successful_message,
         "user_id": user.id,
     }
 
@@ -267,6 +277,7 @@ def update_survey(
     new_data_survey = {
         "created_at": data_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "description": data_survey.description,
+        "successful_message": data_survey.successful_message,
         "email": user.email,
         "id": data_survey.id,
         "questions": new_questions,
