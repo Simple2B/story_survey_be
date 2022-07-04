@@ -23,7 +23,7 @@ class Survey(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
 
-    question = relationship("Question", viewonly=True)
+    questions = relationship("Question", viewonly=True)
 
     def __repr__(self) -> str:
         return f"<{self.id}: {self.title} at {self.created_at}>"

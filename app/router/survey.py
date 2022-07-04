@@ -123,6 +123,7 @@ def create_survey(
         "description": new_survey.description,
         "created_at": new_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": new_survey.user_id,
+        "questions": new_survey.questions,
     }
 
 

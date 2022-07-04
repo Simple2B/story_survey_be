@@ -1,9 +1,31 @@
 from fastapi import HTTPException, Depends, APIRouter
+from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/backend/user", tags=["Users"])
+
+
+@router.get("/get_users", response_model=List[schema.UserOut])
+def get_users(db: Session = Depends(get_db)):
+
+    users = db.query(model.User).all()
+
+    if len(users) > 0:
+        return [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "created_at": user.created_at,
+                "role": user.role,
+                "image": user.image,
+            }
+            for user in users
+        ]
+
+    return users
 
 
 @router.post("/create_user", status_code=201, response_model=schema.UserOut)
