@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     DATABASE_URI: str = ""
     DEV_DATABASE_URI: str = "sqlite:///./test.db"
-    ADMIN_USER: str = "admin"
+    ADMIN_USER: str = "Varvara"
     ADMIN_PASS: str = "admin"
     ADMIN_EMAIL: EmailStr = "vsabybina7@gmail.com"
 
