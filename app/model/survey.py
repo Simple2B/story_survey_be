@@ -17,6 +17,7 @@ class Survey(Base):
     uuid = Column(String(36), default=gen_uuid, nullable=True)
     title = Column(String(128), nullable=False)
     description = Column(String(256), nullable=True)
+    successful_message = Column(String(256), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
     published = Column(Boolean, default=True)
 

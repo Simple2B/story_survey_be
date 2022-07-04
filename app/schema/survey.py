@@ -11,6 +11,7 @@ class SurveyBase(BaseModel):
 class SurveyCreate(SurveyBase):
     title: str
     description: Optional[str]
+    successful_message: Optional[str]
     created_at: Optional[datetime]
     user_id: Optional[int]
     email: Optional[str]
@@ -26,6 +27,7 @@ class Survey(SurveyBase):
     user_id: int
     email: Optional[str]
     questions: Optional[List]
+    successful_message: Optional[List]
 
 
 class SurveyDelete(SurveyBase):
