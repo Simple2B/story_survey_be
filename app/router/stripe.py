@@ -2,6 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException, Response
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.logger import log
 
 
 router = APIRouter(prefix="/backend/stripe", tags=["Stripe"])
@@ -18,18 +19,26 @@ def create_stripe_customer(
 
     # check existance of user with such email
     user = db.query(model.User).filter(model.User.email == data.email).first()
+    log(log.INFO, f"create_stripe_customer: user {data.email} exists: {bool(user)}")
 
     if not user:
         user = model.User(email=data.email)
         db.add(user)
         db.commit()
         db.refresh(user)
+        log(
+            log.INFO, f"create_stripe_customer: user {data.email} created: {bool(user)}"
+        )
 
     # check existance of such customer_id
     stripe_customer = (
         db.query(model.Stripe)
         .filter(model.Stripe.customer_id == data.stripe_customer)
         .first()
+    )
+    log(
+        log.INFO,
+        f"create_stripe_customer: customer {data.stripe_customer} exists: {bool(stripe_customer)}",
     )
 
     if not stripe_customer:
@@ -38,6 +47,11 @@ def create_stripe_customer(
         db.add(stripe_customer)
         db.commit()
         db.refresh(stripe_customer)
+        log(
+            log.INFO,
+            f"create_stripe_customer: customer {data.stripe_customer} created: {bool(stripe_customer)}",
+        )
+        log(log.INFO, f"create_stripe_customer: for user {stripe_customer.user}")
 
     # return users data
     user_customer = schema.UserOut(
@@ -66,21 +80,29 @@ def delete_stripe_customer(
         .filter(model.Stripe.customer_id == data.stripe_customer)
         .first()
     )
+    log(
+        log.INFO,
+        f"delete_customer: customer {data.stripe_customer} exists: {bool(stripe_customer)}",
+    )
 
     if not stripe_customer:
+        log(
+            log.ERROR,
+            f"delete_customer: customer {data.stripe_customer} doesn't exists",
+        )
         raise HTTPException(status_code=404, detail="There is no such customer_id")
 
     # delete customer if he doesn't have session_id
     if stripe_customer.session_id:
+        log(
+            log.ERROR,
+            f"delete_customer: customer {data.stripe_customer} has session_id",
+        )
         raise HTTPException(status_code=400, detail="This customer has session_id")
 
-    stripe_customer = (
-        db.query(model.Stripe)
-        .filter(model.Stripe.customer_id == data.stripe_customer)
-        .first()
-    )
     db.delete(stripe_customer)
     db.commit()
+    log(log.INFO, f"delete_customer: customer {data.stripe_customer} was deleted")
     return Response(status_code=204)
 
 
@@ -93,19 +115,32 @@ def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)
 
     # check existance of user
     user = db.query(model.User).filter_by(email=data.email).first()
+    log(log.INFO, f"create_stripe_session: user {data.email} exists: {bool(user)}")
+
     if not user:
+        log(log.ERROR, f"create_stripe_session: user {data.email} doesn't exists")
         raise HTTPException(status_code=404, detail="This user was not found")
 
     # check existance of such customer_id in model stripe_data
     stripe_data = (
         db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
     )
+    log(
+        log.INFO,
+        f"create_stripe_session: customer_id {data.stripe_customer} exists: {bool(stripe_data)}",
+    )
+
     if not stripe_data:
         stripe_data = model.Stripe(customer_id=data.stripe_customer)
         stripe_data.user_id = user.id
         db.add(stripe_data)
         db.commit()
         db.refresh(stripe_data)
+        log(
+            log.INFO,
+            f"create_stripe_session: customer_id {data.stripe_customer} created: {bool(stripe_data)}",
+        )
+        log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
 
     # insert data into the stripe_data model
     stripe_data.session_id = data.stripe_session_id
@@ -118,6 +153,11 @@ def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)
         stripe_data.product_id = data.advance_product_key
     db.commit()
     db.refresh(stripe_data)
+    log(
+        log.INFO,
+        f"create_stripe_session: data was inserted: {stripe_data.session_id}, {stripe_data.subscription}, {stripe_data.product_id}",
+    )
+    log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
 
     # create my response
     my_response = schema.UserOut(
@@ -141,16 +181,31 @@ def create_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     """
     This route inserts subscription_id into the stripe_data model
     """
+    # check that such customer exists
     stripe_data = (
         db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
     )
+    log(
+        log.INFO,
+        f"create_subscription: customer {data.stripe_customer} exists: {bool(stripe_data)}",
+    )
+
     if not stripe_data:
+        log(
+            log.ERROR,
+            f"create_subscription: customer {data.stripe_customer} doesn't exists",
+        )
         raise HTTPException(status_code=404, detail="This user was not found")
 
     # insert data into the stripe_data model
     stripe_data.subscription_id = data.subscription_id
     db.commit()
     db.refresh(stripe_data)
+    log(
+        log.INFO,
+        f"create_subscription: subscription_id {stripe_data.subscription_id} was inserted for\
+        {stripe_data.customer_id} - {stripe_data.user}",
+    )
 
     # create my response
     my_response = schema.StripeSubscription(
@@ -168,15 +223,29 @@ def delete_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     This route deletes row with accepted subscription_id in the stripe_data model
     You can use it when user stop his subscription
     """
+    # check existance of accepted subscription_id
     stripe_data = (
         db.query(model.Stripe).filter_by(subscription_id=data.subscription_id).first()
     )
+    log(
+        log.INFO,
+        f"delete_subscription: subscription_id {data.subscription_id} exists: {bool(stripe_data)}",
+    )
+
     if not stripe_data:
+        log(
+            log.ERROR,
+            f"delete_subscription: subscription_id {stripe_data.subscription_id} doesn't exists",
+        )
         raise HTTPException(status_code=404, detail="There is no such subscription_id")
 
     # delete data from stripe_data model
     db.delete(stripe_data)
     db.commit()
+    log(
+        log.INFO,
+        f"delete_subscription: row with subcscription_id {data.subscription_id} was deleted",
+    )
 
     return Response(status_code=204)
 

@@ -2,6 +2,7 @@ from fastapi import Depends, APIRouter
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.logger import log
 
 router = APIRouter(prefix="/backend/history", tags=["History"])
 
@@ -10,6 +11,7 @@ router = APIRouter(prefix="/backend/history", tags=["History"])
 def get_history(db: Session = Depends(get_db)):
 
     all_users = db.query(model.User).all()
+    log(log.INFO, f"get_history: {len(all_users)} exist")
     my_response = schema.History(users=all_users)
 
     return my_response
