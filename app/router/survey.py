@@ -189,13 +189,15 @@ def delete_survey(
                     log(
                         log.INFO, "delete_survey:  answer count [%d]", len(answer.all())
                     )
-                    answer.delete(synchronize_session=False)
+                    if len(answer.all()) > 0:
+                        answer.delete(synchronize_session=False)
+                        db.commit()
+                        log(log.INFO, "delete_survey:  answer deleted")
+                if len(questions.all()):
+                    questions.delete(synchronize_session=False)
                     db.commit()
-                    log(log.INFO, "delete_survey:  answer deleted")
-                questions.delete(synchronize_session=False)
-                db.commit()
-                # db.refresh()
-                log(log.INFO, "delete_survey:  questions deleted")
+                    # db.refresh()
+                    log(log.INFO, "delete_survey:  questions deleted")
 
                 del_survey = db.query(model.Survey).filter(
                     (model.Survey.id == int(survey.id))
@@ -206,7 +208,6 @@ def delete_survey(
                 log(log.INFO, "delete_survey:  survey deleted")
 
                 return Response(status_code=204)
-    return
 
 
 @router.put("/update/{id}", response_model=schema.Survey)

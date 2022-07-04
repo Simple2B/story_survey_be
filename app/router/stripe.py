@@ -10,7 +10,7 @@ router = APIRouter(prefix="/backend/stripe", tags=["Stripe"])
 @router.post("/create_customer", response_model=schema.UserOut)
 def create_stripe_customer(data: schema.CreateCustomer, db: Session = Depends(get_db)):
     """
-    This route insert cusromer_id in stripe_data model and return updated user's data.
+    This route insert customer_id in stripe_data model and return updated user's data.
     """
 
     # check existance of user with such email
@@ -36,6 +36,13 @@ def create_stripe_customer(data: schema.CreateCustomer, db: Session = Depends(ge
         db.commit()
         db.refresh(stripe_customer)
 
+    if not stripe_customer.session_id:
+        stripe_customer = db.query(model.Stripe).filter(
+            model.Stripe.customer_id == data.stripe_customer
+        )
+        stripe_customer.delete()
+        db.commit()
+        return
     # return users data
     user_customer = schema.UserOut(
         id=user.id,
@@ -49,7 +56,7 @@ def create_stripe_customer(data: schema.CreateCustomer, db: Session = Depends(ge
     return user_customer
 
 
-# # TODO: /create_stripe_session, recieve email, customer_id, session_id, advance or base subscr; write session_id
+# # TODO: /create_stripe_session, resave email, customer_id, session_id, advance or base subscr; write session_id
 # # response: all field of stripe model + email
 @router.post("/create_stripe_session", response_model=schema.UserOut)
 def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)):
@@ -63,12 +70,15 @@ def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)
         db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
     )
     if not stripe_data:
-        raise HTTPException(
-            status_code=404, detail="You haven`t created stripe customer_id"
-        )
+        stripe_data = model.Stripe(customer_id=data.stripe_customer)
+        stripe_data.user_id = user.id
+        db.add(stripe_data)
+        db.commit()
+        db.refresh(stripe_data)
 
     # insert data into the stripe_data model
     stripe_data.session_id = data.stripe_session_id
+    # stripe_data.subscription_id = data.subscription_id
     if data.basic_product_key:
         stripe_data.subscription = model.Stripe.SubscriptionType.Basic
         stripe_data.product_id = data.basic_product_key
@@ -93,6 +103,44 @@ def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)
     )
 
     return my_response
+
+
+@router.post("/create_subscription", response_model=schema.StripeSubscription)
+def create_subscription(data: schema.StripeSubscription, db: Session = Depends(get_db)):
+
+    stripe_data = (
+        db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
+    )
+    if not stripe_data:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    # insert data into the stripe_data model
+    stripe_data.subscription_id = data.subscription_id
+    db.commit()
+    db.refresh(stripe_data)
+
+    # create my response
+    my_response = {
+        "stripe_session_id": stripe_data.session_id,
+        "subscription_id": stripe_data.subscription_id,
+    }
+
+    return my_response
+
+
+@router.post("/delete_subscription", response_model=str)
+def delete_subscription(sub_id: str, db: Session = Depends(get_db)):
+
+    stripe_data = db.query(model.Stripe).filter_by(subscription_id=sub_id)
+    if not stripe_data.first():
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    # insert data into the stripe_data model
+    stripe_data.delete()
+    db.commit()
+    db.refresh(stripe_data)
+
+    return "ok"
 
 
 # @router.post("/create_portal_session")
