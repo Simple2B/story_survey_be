@@ -3,10 +3,11 @@ from pydantic import BaseModel
 
 
 class Stripe(BaseModel):
-    orm_mode = True
+    class Config:
+        orm_mode = True
 
 
-class CreateCustomer(Stripe):
+class CreateOrDeleteCustomer(Stripe):
     email: str
     stripe_customer: str
 

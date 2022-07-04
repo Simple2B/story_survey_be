@@ -3,6 +3,7 @@ from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.logger import log
 
 router = APIRouter(prefix="/backend/user", tags=["Users"])
 
@@ -11,7 +12,7 @@ router = APIRouter(prefix="/backend/user", tags=["Users"])
 def get_users(db: Session = Depends(get_db)):
 
     users = db.query(model.User).all()
-
+    log(log.INFO, f"get_users: number of users {len(users)}")
     if len(users) > 0:
 
         return [
@@ -38,6 +39,7 @@ def get_users(db: Session = Depends(get_db)):
 def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
     user = db.query(model.User).filter(model.User.email == n_user.email).first()
+    log(log.INFO, f"create_user: user {n_user.email} exists: {bool(user)}")
 
     if not user:
         user = model.User(**n_user.dict())
@@ -45,6 +47,7 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
+    log(log.INFO, f"create_user: user {user}")
     return user
 
 
@@ -72,11 +75,14 @@ def get_user(
     db: Session = Depends(get_db),
 ):
     user = db.query(model.User).filter(model.User.email == email).first()
+    log(log.INFO, f"get_user: user {email} exists: {bool(user)}")
 
     if not user:
+        log(log.ERROR, f"get_user: no user {email}")
         raise HTTPException(status_code=404, detail="This user was not found")
 
     stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    log(log.INFO, f"get_user: stripe info exists: {bool(stripe_info)}")
 
     if not stripe_info:
         return get_info_user(user, db)

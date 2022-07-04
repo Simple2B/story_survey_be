@@ -3,7 +3,8 @@ from pydantic import BaseModel
 
 
 class AnswerBase(BaseModel):
-    orm_mode = True
+    class Config:
+        orm_mode = True
 
 
 class AnswerRequest(AnswerBase):
