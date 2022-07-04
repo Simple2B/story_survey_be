@@ -19,6 +19,7 @@ class Stripe(Base):
     customer_id = Column(String(256), nullable=True)
     session_id = Column(String(256), nullable=True)
     subscription = Column(Enum(SubscriptionType), nullable=True)
+    subscription_id = Column(String(256), nullable=True)
     product_id = Column(String(256), nullable=True)
 
     user = relationship("User")
