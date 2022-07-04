@@ -29,7 +29,7 @@ def test_get_user(client: TestClient, db: Session):
 
     # get user by id
     email = new_user["email"]
-    response = client.get(f"/backend/user/{email}", headers=headers)
+    response = client.get(f"/backend/user/email/{email}", headers=headers)
     assert response and response.ok
     user = response.json()
     assert user["username"] == data.username
