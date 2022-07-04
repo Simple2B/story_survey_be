@@ -17,6 +17,13 @@ class StripeData(Stripe):
     advance_product_key: Optional[str]
     stripe_customer: str
     stripe_session_id: str
+    subscription_id: Optional[str]
+
+
+class StripeSubscription(Stripe):
+    email: Optional[str]
+    stripe_customer: Optional[str]
+    subscription_id: str
 
 
 class StripePortal(Stripe):

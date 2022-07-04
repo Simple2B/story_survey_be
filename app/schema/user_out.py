@@ -14,6 +14,7 @@ class UserOut(BaseModel):
     customer_id: Optional[str]
     session_id: Optional[str]
     subscription: Optional[enum.Enum]
+    subscription_id: Optional[str]
     product_id: Optional[str]
 
     class Config:
