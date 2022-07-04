@@ -34,6 +34,9 @@ def get_surveys(db: Session = Depends(get_db)):
                 "user_id": survey.user_id,
                 "email": survey.user.email,
                 "questions": questions,
+                "successful_message": survey.successful_message
+                if survey.successful_message
+                else "",
             }
         )
 
@@ -74,6 +77,9 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "questions": [
                     {"id": item.id, "question": item.question} for item in questions
                 ],
+                "successful_message": survey.successful_message
+                if survey.successful_message
+                else "",
             }
         )
 
@@ -251,6 +257,7 @@ def update_survey(
     data_edit_survey = {
         "title": survey.title,
         "description": survey.description,
+        "successful_message": survey.successful_message,
         "user_id": user.id,
     }
 

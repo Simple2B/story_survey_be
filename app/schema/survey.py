@@ -27,7 +27,7 @@ class Survey(SurveyBase):
     user_id: int
     email: Optional[str]
     questions: Optional[List]
-    successful_message: Optional[List]
+    successful_message: Optional[str]
 
 
 class SurveyDelete(SurveyBase):
