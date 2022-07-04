@@ -51,11 +51,11 @@ def test_delete_customer(
         db.query(model.Stripe)
         .filter(
             model.Stripe.customer_id == customer_data.stripe_customer,
-            model.Stripe.session_id == None,
+            model.Stripe.session_id is None,
         )
         .first()
     )
-    assert customer == None
+    assert customer is None
 
 
 def test_create_session(
@@ -172,4 +172,4 @@ def test_delete_subscription(
         .filter(model.Stripe.subscription_id == subscription_data.subscription_id)
         .first()
     )
-    assert data == None
+    assert data is None

@@ -155,7 +155,8 @@ def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)
     db.refresh(stripe_data)
     log(
         log.INFO,
-        f"create_stripe_session: data was inserted: {stripe_data.session_id}, {stripe_data.subscription}, {stripe_data.product_id}",
+        f"create_stripe_session: data was inserted:\
+            {stripe_data.session_id}, {stripe_data.subscription}, {stripe_data.product_id}",
     )
     log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
 

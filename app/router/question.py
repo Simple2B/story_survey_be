@@ -1,7 +1,6 @@
-from cmath import log
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
-from app import model, oauth2, schema
+from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
@@ -66,7 +65,6 @@ def delete_question(
         )
 
     # if deleted_question.first().user_id != current_user.id:
-    #     log(log.ERROR, f"delete_question: current user id {current_user.id} doesn't match question user_id {deleted_question.first().user_id}")
     #     raise HTTPException(
     #         status_code=403, detail="delete_question: Not enough permissions"
     #     )
