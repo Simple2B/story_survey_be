@@ -5,7 +5,9 @@ from app import model, schema
 from .helper import create_user
 
 
-def test_auth(client: TestClient, db: Session):
+def test_get_user(client: TestClient, db: Session):
+    """Test for get_user function from router/user.py"""
+
     # data = {"username": USER_NAME, "email": USER_EMAIL, "password": USER_PASSWORD}
     data = create_user()
     # create new user
@@ -26,15 +28,35 @@ def test_auth(client: TestClient, db: Session):
     headers = {"Authorization": f"Bearer {token.access_token}"}
 
     # get user by id
-    id = new_user["id"]
-    response = client.get(f"/backend/user/{id}", headers=headers)
+    email = new_user["email"]
+    response = client.get(f"/backend/user/email/{email}", headers=headers)
     assert response and response.ok
     user = response.json()
     assert user["username"] == data.username
 
 
-def test_req_user(client: TestClient, db: Session):
+def test_create_user(client: TestClient, db: Session):
+    """Test for create_user function from router/user.py"""
+
     req_user = create_user()
     response = client.post("/backend/user/create_user", json=req_user.dict())
     assert response
     assert response.ok
+
+
+def test_get_users(client: TestClient, db: Session):
+    """Test for get_users function from router/user.py"""
+
+    # create two new users
+    frst_new_user = create_user()
+    response_frst = client.post("/backend/user/create_user", json=frst_new_user.dict())
+    assert response_frst.ok
+    sec_new_user = create_user(name="John", email="john@john.com")
+    response_sec = client.post("/backend/user/create_user", json=sec_new_user.dict())
+    assert response_sec.ok
+
+    # get created users
+    response = client.get("/backend/user/get_users")
+    assert response.ok
+    response_data = response.json()
+    assert len(response_data) == 2

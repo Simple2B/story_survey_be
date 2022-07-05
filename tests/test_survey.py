@@ -6,6 +6,8 @@ from .helper import create_user
 
 
 def test_create_survey(client: TestClient, db: Session):
+    """Test for create_survey() function from router/survey.py"""
+
     data = create_user()
     # create new user
     response = client.post("/backend/user/create_user", json=data.dict())
@@ -24,9 +26,9 @@ def test_create_survey(client: TestClient, db: Session):
     token = schema.Token.parse_obj(response.json())
     headers = {"Authorization": f"Bearer {token.access_token}"}
 
-    id = new_user["id"]
+    email = new_user["email"]
 
-    response = client.get(f"/backend/user/{id}", headers=headers)
+    response = client.get(f"/backend/user/email/{email}", headers=headers)
     assert response and response.ok
     user = response.json()
     assert user["username"] == data.username
@@ -83,6 +85,8 @@ def test_create_survey(client: TestClient, db: Session):
 
 
 def test_get_surveys(client: TestClient, db: Session):
+    """Test for get_surveys() function from router/survey.py"""
+
     data = create_user("Poll", "test@test.ku")
     # create new user
     response = client.post("/backend/user/create_user", json=data.dict())

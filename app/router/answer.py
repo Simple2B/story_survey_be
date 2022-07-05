@@ -3,13 +3,15 @@ from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.logger import log
 
 router = APIRouter(prefix="/backend/answer", tags=["Answers"])
 
 
 @router.get("/", response_model=List[schema.Answer])
 def get_answers(db: Session = Depends(get_db)):
-    answers = db.query(model.Question).all()
+    answers = db.query(model.Answer).all()
+    log(log.INFO, f"get_answers: [{len(answers)}] answers exist")
     return answers
 
 
@@ -29,6 +31,8 @@ def create_answer(
         db.refresh(new_answer)
         answers.append(new_answer)
 
+    log(log.INFO, f"create_answer: [{len(answers)} answers were created]")
+
     if len(answers) > 0:
         answers = [
             {
@@ -46,7 +50,10 @@ def create_answer(
 @router.get("/{id}", response_model=schema.Answer)
 def get_answer(id: int, db: Session = Depends(get_db)):
     answer = db.query(model.Answer).get(id)
+    log(log.INFO, f"get_answer: answer [{id}] exists: {bool(answer)}")
+
     if not answer:
+        log(log.ERROR, f"get_answer: answer [{id}] doesn't exist")
         raise HTTPException(
             status_code=404, detail="get_question: This answer was not found"
         )
@@ -58,13 +65,17 @@ def delete_answer(
     id: int,
     db: Session = Depends(get_db),
 ):
-    deleted_answer = db.query(model.Answer).filter_by(id=id)
-    if not deleted_answer.first():
+    deleted_answer = db.query(model.Answer).filter_by(id=id).first()
+    log(log.INFO, f"delete_answer: answer [{id}] exists: {bool(deleted_answer)}")
+
+    if not deleted_answer:
+        log(log.ERROR, f"delete_answer: answer [{id}] doesn't exists")
         raise HTTPException(
             status_code=404, detail="delete_question: This answer was not found"
         )
-    deleted_answer.delete(synchronize_session=False)
+    db.delete(deleted_answer)
     db.commit()
+    log(log.INFO, f"delete_answer: answer [{id}] was deleted")
 
     return Response(status_code=204)
 
@@ -76,13 +87,16 @@ def update_answer(
     db: Session = Depends(get_db),
 ):
     update_answer = db.query(model.Answer).filter_by(id=id)
+    log(log.INFO, f"update_answer: answer [{id}] exists: {bool(update_answer.first())}")
 
     if not update_answer.first():
+        log(log.ERROR, f"update_answer: answer [{id}] doesn't exists")
         raise HTTPException(
             status_code=404, detail="update_question: This answer was not found"
         )
 
     update_answer.update(question_info.dict(), synchronize_session=False)
     db.commit()
+    log(log.INFO, f"update_answer: answer [{id}] was updated")
 
     return update_answer.first()

@@ -17,13 +17,14 @@ class Survey(Base):
     uuid = Column(String(36), default=gen_uuid, nullable=True)
     title = Column(String(128), nullable=False)
     description = Column(String(256), nullable=True)
+    successful_message = Column(String(256), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
     published = Column(Boolean, default=True)
 
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
 
-    question = relationship("Question", viewonly=True)
+    questions = relationship("Question", viewonly=True)
 
     def __repr__(self) -> str:
         return f"<{self.id}: {self.title} at {self.created_at}>"

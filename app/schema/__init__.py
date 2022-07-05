@@ -6,4 +6,5 @@ from .token import Token, TokenData
 from .survey import Survey, SurveyCreate, SurveyDelete
 from .question import Question, QuestionCreate
 from .answer import Answer, AnswerCreate
-from .stripe import StripeData, StripePortal
+from .stripe import StripeData, StripePortal, CreateOrDeleteCustomer, StripeSubscription
+from .history import History

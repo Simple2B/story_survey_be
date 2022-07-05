@@ -1,91 +1,270 @@
-import stripe
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException, Response
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
-from app.config import settings
 from app.logger import log
+
 
 router = APIRouter(prefix="/backend/stripe", tags=["Stripe"])
 
-# settings.STRIPE_PUBLIC_KEY
-# settings.STRIPE_SECRET_KEY
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
-SERVER_HOST = "http://localhost:3000"
-# http://localhost:3000/user_profile/user
-
-
-@router.post("/get_key")
-def get_stripe_key():
-    data = {
-        "s_stripe": settings.STRIPE_SECRET_KEY,
-        "BASIC_PRICE_LOOKUP_KEY": settings.BASIC_PRICE_LOOKUP_KEY,
-        "ADVANCE_PRICE_LOOKUP_KEY": settings.ADVANCE_PRICE_LOOKUP_KEY,
-    }
-    return data
-
-
-@router.post("/session")
-def create_stripe_session(
-    stripe_data: schema.StripeData, db: Session = Depends(get_db)
+@router.post("/create_customer", response_model=schema.UserOut)
+def create_stripe_customer(
+    data: schema.CreateOrDeleteCustomer, db: Session = Depends(get_db)
 ):
+    """
+    This route insert customer_id in stripe_data model and return updated user's data.
+    You should use this route when you create customer on Stripe platform and have to save his customer_id.
+    """
 
-    if not stripe_data.email:
-        log(log.INFO("Email not found"))
-        return "Email not found"
-
-    user = db.query(model.User).filter(model.User.email == stripe_data.email).first()
+    # check existance of user with such email
+    user = db.query(model.User).filter(model.User.email == data.email).first()
+    log(log.INFO, f"create_stripe_customer: user {data.email} exists: {bool(user)}")
 
     if not user:
-        user = model.User(email=stripe_data.email)
+        user = model.User(email=data.email)
         db.add(user)
         db.commit()
         db.refresh(user)
-
-    log(log.INFO, "get_user_surveys: user [%s]", user)
-
-    lookup_key = stripe_data.key
-    # success_url=
-    # cancel_url=
-    try:
-        # prices = stripe.Price.list(lookup_keys=[lookup_key], expand=["data.product"])
-
-        checkout_session = stripe.checkout.Session.create(
-            line_items=[
-                {
-                    "price": lookup_key,
-                    "quantity": 1,
-                },
-            ],
-            mode="subscription",
-            success_url=SERVER_HOST
-            + "/user_profile/user"
-            + "?success=true&session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=SERVER_HOST + "?canceled=true",
+        log(
+            log.INFO, f"create_stripe_customer: user {data.email} created: {bool(user)}"
         )
-        return checkout_session.url
-        # return redirect(checkout_session.url, code=303)
-    except Exception as e:
-        print(e)
-        return "Server error", 500
 
-
-@router.post("/create_portal_session")
-def customer_portal(data: schema.StripePortal, db: Session = Depends(get_db)):
-    data
-    # For demonstration purposes, we're using the Checkout session to retrieve the customer ID.
-    # Typically this is stored alongside the authenticated user in your database.
-    # checkout_session_id = request.form.get("session_id")
-    checkout_session = stripe.checkout.Session.retrieve(data.session_id)
-
-    # This is the URL to which the customer will be redirected after they are
-    # done managing their billing with the portal.
-    return_url = SERVER_HOST
-    customer_id = checkout_session.customer
-
-    portalSession = stripe.billing_portal.Session.create(
-        customer=customer_id,
-        return_url=return_url + "/user_profile/user",
+    # check existance of such customer_id
+    stripe_customer = (
+        db.query(model.Stripe)
+        .filter(model.Stripe.customer_id == data.stripe_customer)
+        .first()
     )
-    return portalSession.url
+    log(
+        log.INFO,
+        f"create_stripe_customer: customer {data.stripe_customer} exists: {bool(stripe_customer)}",
+    )
+
+    if not stripe_customer:
+        stripe_customer = model.Stripe(customer_id=data.stripe_customer)
+        stripe_customer.user_id = user.id
+        db.add(stripe_customer)
+        db.commit()
+        db.refresh(stripe_customer)
+        log(
+            log.INFO,
+            f"create_stripe_customer: customer {data.stripe_customer} created: {bool(stripe_customer)}",
+        )
+        log(log.INFO, f"create_stripe_customer: for user {stripe_customer.user}")
+
+    # return users data
+    user_customer = schema.UserOut(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        created_at=user.created_at,
+        role=user.role,
+        image=user.image,
+        customer_id=stripe_customer.customer_id,
+    )
+    return user_customer
+
+
+@router.delete("/delete_customer", status_code=204)
+def delete_stripe_customer(
+    data: schema.CreateOrDeleteCustomer, db: Session = Depends(get_db)
+):
+    """
+    This route deletes data in stripe_data model if row with accepted customer_id has no session_id.
+    You can use it if user pressed "Cancel button" on Stripe subscription page.
+    """
+    # check existance of such customer_id
+    stripe_customer = (
+        db.query(model.Stripe)
+        .filter(model.Stripe.customer_id == data.stripe_customer)
+        .first()
+    )
+    log(
+        log.INFO,
+        f"delete_customer: customer {data.stripe_customer} exists: {bool(stripe_customer)}",
+    )
+
+    if not stripe_customer:
+        log(
+            log.ERROR,
+            f"delete_customer: customer {data.stripe_customer} doesn't exists",
+        )
+        raise HTTPException(status_code=404, detail="There is no such customer_id")
+
+    # delete customer if he doesn't have session_id
+    if stripe_customer.session_id:
+        log(
+            log.ERROR,
+            f"delete_customer: customer {data.stripe_customer} has session_id",
+        )
+        raise HTTPException(status_code=400, detail="This customer has session_id")
+
+    db.delete(stripe_customer)
+    db.commit()
+    log(log.INFO, f"delete_customer: customer {data.stripe_customer} was deleted")
+    return Response(status_code=204)
+
+
+@router.post("/create_stripe_session", response_model=schema.UserOut)
+def create_stripe_session(data: schema.StripeData, db: Session = Depends(get_db)):
+    """
+    This route inserts stripe data (session_d, subscription, product_id) into the stripe_data model
+    You can use it when user creates stripe checkout session
+    """
+
+    # check existance of user
+    user = db.query(model.User).filter_by(email=data.email).first()
+    log(log.INFO, f"create_stripe_session: user {data.email} exists: {bool(user)}")
+
+    if not user:
+        log(log.ERROR, f"create_stripe_session: user {data.email} doesn't exists")
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    # check existance of such customer_id in model stripe_data
+    stripe_data = (
+        db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
+    )
+    log(
+        log.INFO,
+        f"create_stripe_session: customer_id {data.stripe_customer} exists: {bool(stripe_data)}",
+    )
+
+    if not stripe_data:
+        stripe_data = model.Stripe(customer_id=data.stripe_customer)
+        stripe_data.user_id = user.id
+        db.add(stripe_data)
+        db.commit()
+        db.refresh(stripe_data)
+        log(
+            log.INFO,
+            f"create_stripe_session: customer_id {data.stripe_customer} created: {bool(stripe_data)}",
+        )
+        log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
+
+    # insert data into the stripe_data model
+    stripe_data.session_id = data.stripe_session_id
+    # stripe_data.subscription_id = data.subscription_id
+    if data.basic_product_key:
+        stripe_data.subscription = model.Stripe.SubscriptionType.Basic
+        stripe_data.product_id = data.basic_product_key
+    else:
+        stripe_data.subscription = model.Stripe.SubscriptionType.Advance
+        stripe_data.product_id = data.advance_product_key
+    db.commit()
+    db.refresh(stripe_data)
+    log(
+        log.INFO,
+        f"create_stripe_session: data was inserted:\
+            {stripe_data.session_id}, {stripe_data.subscription}, {stripe_data.product_id}",
+    )
+    log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
+
+    # create my response
+    my_response = schema.UserOut(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        created_at=user.created_at,
+        role=user.role,
+        image=user.image,
+        customer_id=stripe_data.customer_id,
+        session_id=stripe_data.session_id,
+        subscription=stripe_data.subscription,
+        product_id=stripe_data.product_id,
+    )
+
+    return my_response
+
+
+@router.post("/create_subscription", response_model=schema.StripeSubscription)
+def create_subscription(data: schema.StripeSubscription, db: Session = Depends(get_db)):
+    """
+    This route inserts subscription_id into the stripe_data model
+    """
+    # check that such customer exists
+    stripe_data = (
+        db.query(model.Stripe).filter_by(customer_id=data.stripe_customer).first()
+    )
+    log(
+        log.INFO,
+        f"create_subscription: customer {data.stripe_customer} exists: {bool(stripe_data)}",
+    )
+
+    if not stripe_data:
+        log(
+            log.ERROR,
+            f"create_subscription: customer {data.stripe_customer} doesn't exists",
+        )
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    # insert data into the stripe_data model
+    stripe_data.subscription_id = data.subscription_id
+    db.commit()
+    db.refresh(stripe_data)
+    log(
+        log.INFO,
+        f"create_subscription: subscription_id {stripe_data.subscription_id} was inserted for\
+        {stripe_data.customer_id} - {stripe_data.user}",
+    )
+
+    # create my response
+    my_response = schema.StripeSubscription(
+        email=stripe_data.user.email,
+        stripe_customer=stripe_data.customer_id,
+        subscription_id=stripe_data.subscription_id,
+    )
+
+    return my_response
+
+
+@router.post("/delete_subscription", status_code=204)
+def delete_subscription(data: schema.StripeSubscription, db: Session = Depends(get_db)):
+    """
+    This route deletes row with accepted subscription_id in the stripe_data model
+    You can use it when user stop his subscription
+    """
+    # check existance of accepted subscription_id
+    stripe_data = (
+        db.query(model.Stripe).filter_by(subscription_id=data.subscription_id).first()
+    )
+    log(
+        log.INFO,
+        f"delete_subscription: subscription_id {data.subscription_id} exists: {bool(stripe_data)}",
+    )
+
+    if not stripe_data:
+        log(
+            log.ERROR,
+            f"delete_subscription: subscription_id {stripe_data.subscription_id} doesn't exists",
+        )
+        raise HTTPException(status_code=404, detail="There is no such subscription_id")
+
+    # delete data from stripe_data model
+    db.delete(stripe_data)
+    db.commit()
+    log(
+        log.INFO,
+        f"delete_subscription: row with subcscription_id {data.subscription_id} was deleted",
+    )
+
+    return Response(status_code=204)
+
+
+# @router.post("/create_portal_session")
+# TODO: /update_subscr
+# def customer_portal(data: schema.StripePortal, db: Session = Depends(get_db)):
+#     data
+#     # checkout_session_id = request.form.get("session_id")
+#     checkout_session = stripe.checkout.Session.retrieve(data.session_id)
+
+#     # This is the URL to which the customer will be redirected after they are
+#     # done managing their billing with the portal.
+#     return_url = SERVER_HOST
+#     customer_id = checkout_session.customer
+
+#     portalSession = stripe.billing_portal.Session.create(
+#         customer=customer_id,
+#         return_url=return_url + "/user_profile/user",
+#     )
+#     return portalSession.url

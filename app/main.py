@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.router import answer, question, survey, user, auth, stripe
+from app.router import answer, question, survey, user, auth, stripe, history
 from .config import settings
 
 app = FastAPI(
@@ -22,6 +22,7 @@ app.include_router(survey.router)
 app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(stripe.router)
+app.include_router(history.router)
 
 
 @app.get("/")
