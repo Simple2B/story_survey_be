@@ -10,7 +10,7 @@ class SessionNext(Base):
 
     timestamp_session_start = Column(DateTime())
     timestamp_session_end = Column(DateTime(), nullable=True)
-    session = Column(String(256), unique=True)
+    session = Column(String(256), nullable=False)
 
     def __repr__(self) -> str:
         return f"<{self.id}: user id {self.user_id}>"
