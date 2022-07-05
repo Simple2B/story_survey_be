@@ -98,6 +98,10 @@ def get_surveys_for_user(user, db):
 
 
 def get_survey_info(survey: schema.Survey):
+    questions = []
+    for q in survey.questions:
+        if len(q.question) > 0:
+            questions.append(q)
     return {
         "id": survey.id,
         "uuid": survey.uuid,
@@ -105,7 +109,7 @@ def get_survey_info(survey: schema.Survey):
         "description": survey.description,
         "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": survey.user_id,
-        "questions": survey.questions,
+        "questions": questions,
     }
 
 

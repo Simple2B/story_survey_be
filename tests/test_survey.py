@@ -76,7 +76,7 @@ def test_create_survey(client: TestClient, db: Session):
                 "email": EMAIL,
                 "session_id": "uuid_<secret>",
                 "start_time": "05/07/2022, 18:52:24",
-                "end_time": "",
+                # "end_time": "",
             }
         )
 

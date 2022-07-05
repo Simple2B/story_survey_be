@@ -9,7 +9,7 @@ class SessionNext(Base):
     id = Column(Integer, primary_key=True)
 
     timestamp_session_start = Column(DateTime(), nullable=False)
-    timestamp_session_end = Column(DateTime(), nullable=False)
+    timestamp_session_end = Column(DateTime(), nullable=True)
     session = Column(String(256), nullable=False)
 
     def __repr__(self) -> str:

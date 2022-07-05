@@ -30,6 +30,21 @@ class Survey(SurveyBase):
     successful_message: Optional[str]
 
 
+# class QuestionAnswer(SurveyBase);
+#     question_id: int
+#     answers:
+
+# class SurveyWithAnswer(SurveyBase):
+#     id: int
+#     uuid: Optional[str]
+#     title: str
+#     description: Optional[str]
+#     created_at: Optional[str]
+#     user_id: int
+#     email: Optional[str]
+#     questions: Optional[List]
+
+
 class SurveyDelete(SurveyBase):
     survey_id: int
     email: Optional[str]

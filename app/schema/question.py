@@ -1,3 +1,4 @@
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -15,3 +16,4 @@ class Question(QuestionBase):
     id: int
     question: str
     survey_id: int
+    answers: Optional[List]
