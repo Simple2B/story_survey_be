@@ -23,7 +23,7 @@ def get_surveys(db: Session = Depends(get_db)):
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
-        questions = [item for item in questions if item.question]
+        # questions = [item for item in questions if item.question]
 
         log(log.INFO, "get_surveys: questions [%s]", questions)
 
@@ -180,7 +180,7 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
 
-    questions = [item for item in questions if item.question]
+    # questions = [item for item in questions if item.question]
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
 

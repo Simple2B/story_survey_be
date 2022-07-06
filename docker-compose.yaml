@@ -13,6 +13,7 @@ services:
     restart: always
 
   app:
+    image: istacat/storysurvey
     build: .
     restart: always
     command: bash ./start_server.sh
