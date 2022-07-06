@@ -23,6 +23,9 @@ def get_surveys(db: Session = Depends(get_db)):
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
+        questions = [item for item in questions if item.question]
+
+        log(log.INFO, "get_surveys: questions [%s]", questions)
 
         surveys_with_question.append(
             {
@@ -75,7 +78,9 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "user_id": survey.user_id,
                 "email": user.email,
                 "questions": [
-                    {"id": item.id, "question": item.question} for item in questions
+                    {"id": item.id, "question": item.question}
+                    for item in questions
+                    if item.question
                 ],
                 "successful_message": survey.successful_message
                 if survey.successful_message
