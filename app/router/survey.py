@@ -23,6 +23,9 @@ def get_surveys(db: Session = Depends(get_db)):
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
+        # questions = [item for item in questions if item.question]
+
+        log(log.INFO, "get_surveys: questions [%s]", questions)
 
         surveys_with_question.append(
             {
@@ -75,7 +78,9 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "user_id": survey.user_id,
                 "email": user.email,
                 "questions": [
-                    {"id": item.id, "question": item.question} for item in questions
+                    {"id": item.id, "question": item.question}
+                    for item in questions
+                    if item.question
                 ],
                 "successful_message": survey.successful_message
                 if survey.successful_message
@@ -159,6 +164,47 @@ def get_survey(id: str, db: Session = Depends(get_db)):
         "user_id": survey.user_id,
         "email": survey.user.email,
         "questions": questions,
+    }
+
+
+@router.get("/get_survey/survey_with_answer/{id}", response_model=schema.Survey)
+def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
+    # survey_id = int(re.search(r"\d+", id).group())
+    survey = db.query(model.Survey).get(id)
+
+    if not survey:
+        raise HTTPException(status_code=404, detail="This survey was not found")
+
+    log(log.INFO, "get_survey_with_answer: survey [%s]", survey)
+    questions = (
+        db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
+    )
+
+    # questions = [item for item in questions if item.question]
+
+    log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
+
+    # if len(questions) > 0:
+
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "successful_message": survey.successful_message,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "email": survey.user.email,
+        "questions": [
+            {
+                "id": item.id,
+                "question": item.question,
+                "survey_id": item.survey_id,
+                "survey": item.survey,
+                "answers": item.answers,
+            }
+            for item in questions
+        ],
     }
 
 

@@ -17,6 +17,9 @@ class AnswerCreate(AnswerBase):
     answer: str
     question: AnswerRequest
     email: Optional[str]
+    session_id: Optional[str]
+    start_time: Optional[str]
+    end_time: Optional[str]
 
 
 class Answer(AnswerBase):
@@ -24,3 +27,7 @@ class Answer(AnswerBase):
     answer: str
     survey_id: int
     created_at: str
+    session_id: Optional[int]
+    session: Optional[str]
+    start_time: Optional[str]
+    end_time: Optional[str]

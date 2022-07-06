@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
 from app import model, schema
@@ -21,17 +22,31 @@ def create_answer(
     db: Session = Depends(get_db),
 ):
     answers = []
+    sessions = []
     for item in answer_info:
-        new_answer = model.Answer(
-            answer=item.answer,
-            question_id=item.question.id,
-        )
-        db.add(new_answer)
-        db.commit()
-        db.refresh(new_answer)
-        answers.append(new_answer)
+        if len(item.session_id) > 0 and len(item.answer) > 0:
+            start_time = datetime.strptime(item.start_time, "%m/%d/%Y, %H:%M:%S")
+            create_session_next = model.SessionNext(
+                timestamp_session_start=start_time,
+                # timestamp_session_end=item.end_time,
+                session=item.session_id,
+            )
+            db.add(create_session_next)
+            db.commit()
+            db.refresh(create_session_next)
+            sessions.append(create_session_next)
+            new_answer = model.Answer(
+                answer=item.answer,
+                question_id=item.question.id,
+                session_id=create_session_next.id,
+            )
+            db.add(new_answer)
+            db.commit()
+            db.refresh(new_answer)
+            answers.append(new_answer)
 
     log(log.INFO, f"create_answer: [{len(answers)} answers were created]")
+    log(log.INFO, f"create_answer: [{len(sessions)} sessions were created]")
 
     if len(answers) > 0:
         answers = [
@@ -40,6 +55,10 @@ def create_answer(
                 "answer": answer.answer,
                 "survey_id": answer.question.survey_id,
                 "created_at": answer.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                "session_id": answer.session_id,
+                # "session": ,
+                # "start_time": ,
+                # "end_time": ,
             }
             for answer in answers
         ]
