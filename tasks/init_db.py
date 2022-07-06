@@ -6,6 +6,27 @@ from app.model import User
 NUM_TEST_USERS = 10
 NUM_TEST_POSTS = 3
 
+admins = [
+    {
+        "username": settings.ADMIN_USER,
+        "password": settings.ADMIN_PASS,
+        "email": settings.ADMIN_EMAIL,
+        "role": User.UserRole.Admin,
+    },
+    {
+        "username": settings.ADMIN2_USER,
+        "password": settings.ADMIN2_PASS,
+        "email": settings.ADMIN2_EMAIL,
+        "role": User.UserRole.Admin,
+    },
+    {
+        "username": settings.ADMIN3_USER,
+        "password": settings.ADMIN3_PASS,
+        "email": settings.ADMIN3_EMAIL,
+        "role": User.UserRole.Admin,
+    },
+]
+
 
 @task
 def init_db(_, test_data=False):
@@ -18,13 +39,14 @@ def init_db(_, test_data=False):
 
     db = SessionLocal()
     # add admin user
-    admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
-    if not admin:
+    # admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+    # if not admin:
+    for item in range(len(admins)):
         admin: User = User(
-            username=settings.ADMIN_USER,
-            password=settings.ADMIN_PASS,
-            email=settings.ADMIN_EMAIL,
-            role=User.UserRole.Admin,
+            username=admins[item]["username"],
+            password=admins[item]["password"],
+            email=admins[item]["email"],
+            role=admins[item]["role"],
         )
         db.add(admin)
     if test_data:
