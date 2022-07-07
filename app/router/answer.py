@@ -45,8 +45,8 @@ def create_answer(
             db.refresh(new_answer)
             answers.append(new_answer)
 
-    log(log.INFO, f"create_answer: [{len(answers)} answers were created]")
-    log(log.INFO, f"create_answer: [{len(sessions)} sessions were created]")
+    # log(log.INFO, f"create_answer: [{len(answers)} answers were created]")
+    # log(log.INFO, f"create_answer: [{len(sessions)} sessions were created]")
 
     if len(answers) > 0:
         answers = [
@@ -54,7 +54,8 @@ def create_answer(
                 "id": answer.id,
                 "answer": answer.answer,
                 "survey_id": answer.question.survey_id,
-                "created_at": answer.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                "created_at": answer.created_at,
+                # "created_at": answer.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "session_id": answer.session_id,
                 # "session": ,
                 # "start_time": ,
