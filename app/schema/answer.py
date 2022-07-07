@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
@@ -26,7 +27,7 @@ class Answer(AnswerBase):
     id: int
     answer: str
     survey_id: int
-    created_at: str
+    created_at: Optional[datetime]
     session_id: Optional[int]
     session: Optional[str]
     start_time: Optional[str]
