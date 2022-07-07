@@ -25,9 +25,9 @@ def create_answer(
     sessions = []
     for item in answer_info:
         if len(item.session_id) > 0 and len(item.answer) > 0:
-            start_time = datetime.strptime(item.start_time, "%m/%d/%Y, %H:%M:%S")
+            # start_time = datetime.strptime(item.start_time, "%m/%d/%Y, %H:%M:%S")
             create_session_next = model.SessionNext(
-                timestamp_session_start=start_time,
+                # timestamp_session_start=start_time,
                 # timestamp_session_end=item.end_time,
                 session=item.session_id,
             )
