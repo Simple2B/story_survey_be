@@ -74,18 +74,14 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
 
-        # for item in questions:
-        #     if item.question == "":
-        #         questions.remove(item)
-        #         questions.append(item)
+        for item in questions:
+            if item.question == "":
+                questions.remove(item)
+                questions.append(item)
 
-        questions = [
-            {"id": item.id, "question": item.question}
-            for item in questions
-            if item.question
-        ]
+        questions = [{"id": item.id, "question": item.question} for item in questions]
 
-        questions = sorted(questions, key=lambda x: x["id"])
+        # questions = sorted(questions, key=lambda x: x["id"])
 
         surveys_with_question.append(
             {
