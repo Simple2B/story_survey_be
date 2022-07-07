@@ -1,8 +1,8 @@
-"""timestamp_session_end
+"""session date
 
-Revision ID: 0b996c320dbc
-Revises: 8392f62378ff
-Create Date: 2022-07-06 00:47:14.475365
+Revision ID: 6c86eeb58d2c
+Revises: 0b996c320dbc
+Create Date: 2022-07-07 11:31:16.422919
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "0b996c320dbc"
-down_revision = "8392f62378ff"
+revision = "6c86eeb58d2c"
+down_revision = "0b996c320dbc"
 branch_labels = None
 depends_on = None
 
