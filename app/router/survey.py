@@ -23,6 +23,11 @@ def get_surveys(db: Session = Depends(get_db)):
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
+        for item in questions:
+            if item.question == "":
+                questions.remove(item)
+                questions.append(item)
+
         # questions = [item for item in questions if item.question]
 
         log(log.INFO, "get_surveys: questions [%s]", questions)
@@ -69,6 +74,17 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
 
+        for item in questions:
+            if item.question == "":
+                questions.remove(item)
+                questions.append(item)
+
+        questions = [
+            {"id": item.id, "question": item.question}
+            for item in questions
+            if item.question
+        ]
+
         surveys_with_question.append(
             {
                 "id": survey.id,
@@ -77,11 +93,7 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "user_id": survey.user_id,
                 "email": user.email,
-                "questions": [
-                    {"id": item.id, "question": item.question}
-                    for item in questions
-                    if item.question
-                ],
+                "questions": questions,
                 "successful_message": survey.successful_message
                 if survey.successful_message
                 else "",
