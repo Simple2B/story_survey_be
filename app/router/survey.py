@@ -333,8 +333,8 @@ def update_survey(
             # db.refresh(deleted_question)
         log(log.INFO, "update_survey: questions deleted")
 
-    updated_survey.update(data_edit_survey, synchronize_session=False)
-    db.commit()
+        updated_survey.update(data_edit_survey, synchronize_session=False)
+        db.commit()
 
     if len(create_question) > 0:
         for question in create_question:
@@ -349,8 +349,8 @@ def update_survey(
                 log.INFO,
                 f"update_survey: question '{question}' created for survey {question}",
             )
-    updated_survey.update(data_edit_survey, synchronize_session=False)
-    db.commit()
+        updated_survey.update(data_edit_survey, synchronize_session=False)
+        db.commit()
 
     for item in new_questions:
         for updated_question in updated_questions:
@@ -360,10 +360,10 @@ def update_survey(
                 db.commit()
                 db.refresh(updated_question)
 
-    updated_questions = sorted(updated_questions, key=lambda x: x.id)
+        updated_questions = sorted(updated_questions, key=lambda x: x.id)
 
-    updated_survey.update(data_edit_survey, synchronize_session=False)
-    db.commit()
+        updated_survey.update(data_edit_survey, synchronize_session=False)
+        db.commit()
 
     data_survey = updated_survey.first()
     questions = (
