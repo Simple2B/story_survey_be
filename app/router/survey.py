@@ -86,6 +86,7 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
         surveys_with_question.append(
             {
                 "id": survey.id,
+                "uuid": survey.uuid,
                 "title": survey.title,
                 "description": survey.description,
                 "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
@@ -303,6 +304,54 @@ def update_survey(
     )
     new_questions = survey.questions
 
+    deleted_questions = survey.questions_deleted
+
+    create_question = survey.create_question
+
+    data_edit_survey = {
+        "title": survey.title,
+        "description": survey.description,
+        "successful_message": survey.successful_message,
+        "user_id": user.id,
+    }
+
+    if len(deleted_questions) > 0:
+        for question in deleted_questions:
+            answers = db.query(model.Answer).filter(
+                model.Answer.question_id == question["id"]
+            )
+            if len(answers.all()) > 0:
+                answers.delete()
+                db.commit()
+                log(log.INFO, "update_survey:  answers deleted")
+
+            deleted_question = db.query(model.Question).filter(
+                model.Question.id == question["id"]
+            )
+            deleted_question.delete()
+            db.commit()
+            # db.refresh(deleted_question)
+        log(log.INFO, "update_survey: questions deleted")
+
+    updated_survey.update(data_edit_survey, synchronize_session=False)
+    db.commit()
+
+    if len(create_question) > 0:
+        for question in create_question:
+            new_question = model.Question(
+                question=question,
+                survey_id=survey.id,
+            )
+            db.add(new_question)
+            db.commit()
+            db.refresh(new_question)
+            log(
+                log.INFO,
+                f"update_survey: question '{question}' created for survey {question}",
+            )
+    updated_survey.update(data_edit_survey, synchronize_session=False)
+    db.commit()
+
     for item in new_questions:
         for updated_question in updated_questions:
             if updated_question.id == item["id"]:
@@ -313,21 +362,11 @@ def update_survey(
 
     updated_questions = sorted(updated_questions, key=lambda x: x.id)
 
-    data_edit_survey = {
-        "title": survey.title,
-        "description": survey.description,
-        "successful_message": survey.successful_message,
-        "user_id": user.id,
-    }
-
-    # if updated_survey.first().user_id != current_user.id:
-    #     raise HTTPException(status_code=403, detail="Not enough permissions")
-
     updated_survey.update(data_edit_survey, synchronize_session=False)
     db.commit()
 
     data_survey = updated_survey.first()
-    new_questions = (
+    questions = (
         db.query(model.Question)
         .filter(model.Question.survey_id == data_survey.id)
         .all()
@@ -339,9 +378,13 @@ def update_survey(
         "successful_message": data_survey.successful_message,
         "email": user.email,
         "id": data_survey.id,
-        "questions": new_questions,
+        "questions": questions,
         "title": data_survey.title,
         "user_id": user.id,
     }
+
+    # new_data_survey = new_data_survey.sort(
+    #     reverse=True, key=lambda e: e["questions"].id
+    # )
 
     return new_data_survey

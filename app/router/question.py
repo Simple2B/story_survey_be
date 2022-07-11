@@ -57,6 +57,13 @@ def delete_question(
 ):
     deleted_question = db.query(model.Question).filter_by(id=id).first()
     log(log.INFO, f"delete_question: question {id} exists: {bool(deleted_question)}")
+    answers = db.query(model.Answer).filter(model.Answer.question_id == id)
+
+    if len(answers.all()) > 0:
+        log(log.INFO, "delete_question: count [%d] of answers: ", len(answers.all()))
+        answers.delete()
+        db.commit()
+        log(log.INFO, "delete_question:  answers deleted")
 
     if not deleted_question:
         log(log.ERROR, f"delete_question: question {id} doesn't exists")
