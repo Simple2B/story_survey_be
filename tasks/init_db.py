@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from invoke import task
 from app.config import settings
-from app.model import User
+from app import model
 
 NUM_TEST_USERS = 10
 NUM_TEST_POSTS = 3
@@ -11,19 +11,19 @@ admins = [
         "username": settings.ADMIN_USER,
         "password": settings.ADMIN_PASS,
         "email": settings.ADMIN_EMAIL,
-        "role": User.UserRole.Admin,
+        "role": model.User.UserRole.Admin,
     },
     {
         "username": settings.ADMIN2_USER,
         "password": settings.ADMIN2_PASS,
         "email": settings.ADMIN2_EMAIL,
-        "role": User.UserRole.Admin,
+        "role": model.User.UserRole.Admin,
     },
     {
         "username": settings.ADMIN3_USER,
         "password": settings.ADMIN3_PASS,
         "email": settings.ADMIN3_EMAIL,
-        "role": User.UserRole.Admin,
+        "role": model.User.UserRole.Admin,
     },
 ]
 
@@ -42,7 +42,19 @@ def init_db(_, test_data=False):
     # admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
     # if not admin:
     for item in range(len(admins)):
-        admin: User = User(
+        admin = (
+            db.query(model.User)
+            .filter(model.User.email == admins[item]["email"])
+            .first()
+        )
+        if admin:
+            admin.username = admins[item]["username"]
+            admin.password = admins[item]["password"]
+            admin.email = admins[item]["email"]
+            admin.role = admins[item]["role"]
+            db.add(admin)
+
+        admin: model.User = model.User(
             username=admins[item]["username"],
             password=admins[item]["password"],
             email=admins[item]["email"],
