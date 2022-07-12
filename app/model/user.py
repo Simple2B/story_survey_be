@@ -22,12 +22,12 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid)
     created_at = Column(DateTime(), default=datetime.now)
-    username = Column(String(256), nullable=True)
+    username = Column(String(628), nullable=True)
 
-    image = Column(String(256), nullable=True)
-    email = Column(String(256), nullable=False, unique=True)
+    image = Column(String(628), nullable=True)
+    email = Column(String(628), nullable=False, unique=True)
 
-    password_hash = Column(String(256), nullable=True)
+    password_hash = Column(String(628), nullable=True)
 
     role = Column(Enum(UserRole), default=UserRole.Client)
 
