@@ -14,4 +14,4 @@ class SessionNext(Base):
     session = Column(String(256), nullable=False)
 
     def __repr__(self) -> str:
-        return f"<{self.id}: user id {self.user_id}>"
+        return f"<{self.id}: user id {self.session}>"
