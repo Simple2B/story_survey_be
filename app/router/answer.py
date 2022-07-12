@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
 from app import model, schema
