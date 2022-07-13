@@ -9,6 +9,7 @@ from .survey import Survey
 
 class UserOut(BaseModel):
     id: int
+    uuid: Optional[str]
     username: Optional[str]
     email: str
     created_at: datetime
