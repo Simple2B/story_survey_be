@@ -42,13 +42,16 @@ def init_db(_, test_data=False):
     # admin = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
     # if not admin:
     for item in range(len(admins)):
-        admin: User = User(
-            username=admins[item]["username"],
-            password=admins[item]["password"],
-            email=admins[item]["email"],
-            role=admins[item]["role"],
-        )
-        db.add(admin)
+
+        admin = db.query(User).filter(User.email == admins[item]["email"]).first()
+        if not admin:
+            admin: User = User(
+                username=admins[item]["username"],
+                password=admins[item]["password"],
+                email=admins[item]["email"],
+                role=admins[item]["role"],
+            )
+            db.add(admin)
     if test_data:
         # Add test data
         fill_test_data(db)

@@ -16,11 +16,11 @@ class Stripe(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    customer_id = Column(String(256), nullable=True)
-    session_id = Column(String(256), nullable=True)
+    customer_id = Column(String(628), nullable=True)
+    session_id = Column(String(628), nullable=True)
     subscription = Column(Enum(SubscriptionType), nullable=True)
-    subscription_id = Column(String(256), nullable=True)
-    product_id = Column(String(256), nullable=True)
+    subscription_id = Column(String(628), nullable=True)
+    product_id = Column(String(628), nullable=True)
 
     user = relationship("User")
 

@@ -16,6 +16,7 @@ class SurveyCreate(SurveyBase):
     created_at: Optional[datetime]
     user_id: Optional[int]
     email: Optional[str]
+    published: Optional[bool]
     questions: Optional[List]
     questions_deleted: Optional[List]
     create_question: Optional[List]
@@ -31,6 +32,7 @@ class Survey(SurveyBase):
     email: Optional[str]
     questions: Optional[List]
     successful_message: Optional[str]
+    published: Optional[bool]
 
 
 # class QuestionAnswer(SurveyBase);

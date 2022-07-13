@@ -45,6 +45,7 @@ def get_surveys(db: Session = Depends(get_db)):
                 "successful_message": survey.successful_message
                 if survey.successful_message
                 else "",
+                "published": survey.published,
             }
         )
 
@@ -96,6 +97,7 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
                 "successful_message": survey.successful_message
                 if survey.successful_message
                 else "",
+                "published": survey.published,
             }
         )
 
@@ -114,11 +116,16 @@ def create_survey(
 
     log(log.INFO, "create_survey: user [%s]", user)
 
+    published = False if survey.published else True
+
+    log(log.INFO, "create_survey: published [%s]", published)
+
     new_survey: model.Survey = model.Survey(
         title=survey.title,
         description=survey.description,
         successful_message=survey.successful_message,
         user_id=user.id,
+        published=published,
     )
     db.add(new_survey)
     db.commit()
@@ -148,6 +155,7 @@ def create_survey(
         "created_at": new_survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": new_survey.user_id,
         "questions": new_survey.questions,
+        "published": new_survey.published,
     }
 
 
@@ -155,6 +163,33 @@ def create_survey(
 def get_survey(id: str, db: Session = Depends(get_db)):
     survey_id = int(re.search(r"\d+", id).group())
     survey = db.query(model.Survey).get(survey_id)
+
+    if not survey:
+        raise HTTPException(status_code=404, detail="This survey was not found")
+
+    log(log.INFO, "get_survey: survey [%s]", survey)
+    questions = (
+        db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
+    )
+    log(log.INFO, "get_survey: questions [%s]", questions)
+
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "successful_message": survey.successful_message,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "email": survey.user.email,
+        "questions": questions,
+    }
+
+
+@router.get("/get_not_public_survey/{uuid}", response_model=schema.Survey)
+def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
+
+    survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
 
     if not survey:
         raise HTTPException(status_code=404, detail="This survey was not found")
