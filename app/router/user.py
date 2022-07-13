@@ -129,12 +129,14 @@ def get_survey_info(survey: schema.Survey):
         "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
         "user_id": survey.user_id,
         "questions": questions,
+        "published": survey.published,
     }
 
 
 def get_info_user(user, db):
     return {
         "id": user.id,
+        "uuid": user.uuid,
         "username": user.username,
         "email": user.email,
         "created_at": user.created_at,
@@ -151,6 +153,7 @@ def get_info_user(user, db):
 def get_user_with_stripe_info(user, stripe_info, db):
     return {
         "id": user.id,
+        "uuid": user.id,
         "username": user.username,
         "email": user.email,
         "created_at": user.created_at,

@@ -186,7 +186,7 @@ def get_survey(id: str, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/get_not_public_survey/{uuid}", response_model=schema.Survey)
+@router.get("/get_survey_with_uuid/{uuid}", response_model=schema.Survey)
 def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
 
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
@@ -200,6 +200,9 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
     )
     log(log.INFO, "get_survey: questions [%s]", questions)
 
+    if len(questions) > 1:
+        questions.sort(key=lambda x: x.question, reverse=True)
+
     return {
         "id": survey.id,
         "uuid": survey.uuid,
@@ -210,6 +213,7 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
         "user_id": survey.user_id,
         "email": survey.user.email,
         "questions": questions,
+        "published": survey.published,
     }
 
 
@@ -226,11 +230,10 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
 
-    # questions = [item for item in questions if item.question]
+    if len(questions) > 1:
+        questions.sort(key=lambda x: x.question, reverse=True)
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
-
-    # if len(questions) > 0:
 
     return {
         "id": survey.id,
