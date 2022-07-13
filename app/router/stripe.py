@@ -245,14 +245,14 @@ def delete_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     db.commit()
     log(
         log.INFO,
-        f"delete_subscription: row with subcscription_id {data.subscription_id} was deleted",
+        f"delete_subscription: row with subscription_id {data.subscription_id} was deleted",
     )
 
     return Response(status_code=204)
 
 
 # @router.post("/create_portal_session")
-# TODO: /update_subscr
+# TODO: /update_subscription
 # def customer_portal(data: schema.StripePortal, db: Session = Depends(get_db)):
 #     data
 #     # checkout_session_id = request.form.get("session_id")
