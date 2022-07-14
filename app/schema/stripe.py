@@ -24,8 +24,18 @@ class StripeData(Stripe):
 class StripeSubscription(Stripe):
     email: Optional[str]
     stripe_customer: Optional[str]
+    status: Optional[str]
+    subscription: Optional[dict]
+    subscription_id: Optional[str]
+    cancel_at_period_end: Optional[bool]
     subscription_id: str
 
 
 class StripePortal(Stripe):
     session_id: str
+
+
+# class StripeSubscriptionUpdate(Stripe):
+#     email: Optional[str]
+#     stripe_customer: Optional[str]
+#     subscription_id: str

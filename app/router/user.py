@@ -10,7 +10,6 @@ router = APIRouter(prefix="/backend/user", tags=["Users"])
 
 @router.get("/get_users", response_model=List[schema.UserOut])
 def get_users(db: Session = Depends(get_db)):
-
     users = db.query(model.User).all()
     log(log.INFO, f"get_users: number of users {len(users)}")
     if len(users) > 0:
@@ -29,6 +28,7 @@ def get_users(db: Session = Depends(get_db)):
                 ]
                 if len(get_surveys_for_user(user, db)) > 0
                 else [],
+                # "cancel_at_period_end": get_stripe_cancel_at_period_end(user, db),
             }
             for user in users
         ]
@@ -109,6 +109,24 @@ def get_user(
     return get_user_with_stripe_info(user, stripe_info, db)
 
 
+@router.get("/stripe_info/{id}", response_model=schema.UserOut)
+def get_user_stripe_info(
+    id: int,
+    db: Session = Depends(get_db),
+):
+    user = db.query(model.User).get(int(id))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+
+    if not stripe_info:
+        return get_info_user(user, db)
+
+    return get_user_with_stripe_info(user, stripe_info, db)
+
+
 # helper functions
 
 
@@ -153,7 +171,7 @@ def get_info_user(user, db):
 def get_user_with_stripe_info(user, stripe_info, db):
     return {
         "id": user.id,
-        "uuid": user.id,
+        "uuid": user.uuid,
         "username": user.username,
         "email": user.email,
         "created_at": user.created_at,
@@ -163,6 +181,7 @@ def get_user_with_stripe_info(user, stripe_info, db):
         "session_id": stripe_info.session_id,
         "subscription": stripe_info.subscription,
         "subscription_id": stripe_info.subscription_id,
+        # "cancel_at_period_end": stripe_info.cancel_at_period_end,
         "product_id": stripe_info.product_id,
         "surveys": [
             get_survey_info(survey) for survey in get_surveys_for_user(user, db)
@@ -170,3 +189,9 @@ def get_user_with_stripe_info(user, stripe_info, db):
         if len(get_surveys_for_user(user, db)) > 0
         else [],
     }
+
+
+def get_stripe_cancel_at_period_end(user, db):
+    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    cancel_at_period_end = stripe_info.cancel_at_period_end
+    return cancel_at_period_end
