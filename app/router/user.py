@@ -28,7 +28,7 @@ def get_users(db: Session = Depends(get_db)):
                 ]
                 if len(get_surveys_for_user(user, db)) > 0
                 else [],
-                # "cancel_at_period_end": get_stripe_cancel_at_period_end(user, db),
+                "cancel_at_period_end": get_stripe_cancel_at_period_end(user, db),
             }
             for user in users
         ]
@@ -62,7 +62,11 @@ def get_user_by_id(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    stripe_info = (
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == user.id)
+        .first()
+    )
 
     if not stripe_info:
         return get_info_user(user, db)
@@ -80,7 +84,11 @@ def get_user_by_uuid(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    stripe_info = (
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == user.id)
+        .first()
+    )
 
     if not stripe_info:
         return get_info_user(user, db)
@@ -100,7 +108,11 @@ def get_user(
         log(log.ERROR, f"get_user: no user {email}")
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    stripe_info = (
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == user.id)
+        .first()
+    )
     log(log.INFO, f"get_user: stripe info exists: {bool(stripe_info)}")
 
     if not stripe_info:
@@ -119,7 +131,11 @@ def get_user_stripe_info(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
+    stripe_info = (
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == user.id)
+        .first()
+    )
 
     if not stripe_info:
         return get_info_user(user, db)
@@ -179,7 +195,7 @@ def get_user_with_stripe_info(user, stripe_info, db):
         "image": user.image,
         "customer_id": stripe_info.customer_id,
         "session_id": stripe_info.session_id,
-        "subscription": stripe_info.subscription,
+        "type": stripe_info.type,
         "subscription_id": stripe_info.subscription_id,
         # "cancel_at_period_end": stripe_info.cancel_at_period_end,
         "product_id": stripe_info.product_id,
@@ -192,6 +208,11 @@ def get_user_with_stripe_info(user, stripe_info, db):
 
 
 def get_stripe_cancel_at_period_end(user, db):
-    stripe_info = db.query(model.Stripe).filter(model.Stripe.user_id == user.id).first()
-    cancel_at_period_end = stripe_info.cancel_at_period_end
-    return cancel_at_period_end
+    stripe_info = (
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == user.id)
+        .first()
+    )
+    if stripe_info:
+        return stripe_info.cancel_at_period_end
+    return None
