@@ -19,7 +19,7 @@ class UserOut(BaseModel):
 
     customer_id: Optional[str]
     session_id: Optional[str]
-    subscription: Optional[enum.Enum]
+    type: Optional[enum.Enum]
     cancel_at_period_end: Optional[Union[bool, None]]
     subscription_id: Optional[str]
     product_id: Optional[str]

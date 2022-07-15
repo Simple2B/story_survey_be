@@ -2,17 +2,18 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Stripe(BaseModel):
+class Subscription(BaseModel):
     class Config:
         orm_mode = True
 
 
-class CreateOrDeleteCustomer(Stripe):
+class CreateOrDeleteCustomer(Subscription):
     email: str
     stripe_customer: str
 
 
-class StripeData(Stripe):
+class StripeData(Subscription):
+    session: Optional[dict]
     email: str
     basic_product_key: Optional[str]
     advance_product_key: Optional[str]
@@ -21,7 +22,7 @@ class StripeData(Stripe):
     subscription_id: Optional[str]
 
 
-class StripeSubscription(Stripe):
+class StripeSubscription(Subscription):
     email: Optional[str]
     stripe_customer: Optional[str]
     status: Optional[str]
@@ -31,11 +32,11 @@ class StripeSubscription(Stripe):
     subscription_id: str
 
 
-class StripePortal(Stripe):
+class StripePortal(Subscription):
     session_id: str
 
 
-# class StripeSubscriptionUpdate(Stripe):
+# class StripeSubscriptionUpdate(Subscription):
 #     email: Optional[str]
 #     stripe_customer: Optional[str]
 #     subscription_id: str
