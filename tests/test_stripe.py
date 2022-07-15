@@ -21,8 +21,8 @@ def test_create_customer(
 
     # check that data has been added to stripe_data model
     customer_data = (
-        db.query(model.Stripe)
-        .filter(model.Stripe.user_id == response_data["id"])
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == response_data["id"])
         .first()
     )
     assert customer_data.customer_id == data.stripe_customer
@@ -48,10 +48,10 @@ def test_delete_customer(
 
     # check existance of deleted customer in database
     customer = (
-        db.query(model.Stripe)
+        db.query(model.Subscription)
         .filter(
-            model.Stripe.customer_id == customer_data.stripe_customer,
-            model.Stripe.session_id is None,
+            model.Subscription.customer_id == customer_data.stripe_customer,
+            model.Subscription.session_id is None,
         )
         .first()
     )
@@ -85,12 +85,12 @@ def test_create_session(
 
     # check inserted data in stripe_data model
     session_data = (
-        db.query(model.Stripe)
-        .filter(model.Stripe.user_id == response_data["id"])
+        db.query(model.Subscription)
+        .filter(model.Subscription.user_id == response_data["id"])
         .first()
     )
     assert session_data.session_id == stripe_data_helper.stripe_session_id
-    assert session_data.subscription == model.Stripe.SubscriptionType.Basic
+    assert session_data.type == model.Subscription.SubscriptionType.Basic
 
 
 def test_create_subscription(
@@ -168,8 +168,8 @@ def test_delete_subscription(
 
     # check existance of deleted data
     data = (
-        db.query(model.Stripe)
-        .filter(model.Stripe.subscription_id == subscription_data.subscription_id)
+        db.query(model.Subscription)
+        .filter(model.Subscription.subscription_id == subscription_data.subscription_id)
         .first()
     )
     assert data is None
