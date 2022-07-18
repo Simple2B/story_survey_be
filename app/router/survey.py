@@ -455,11 +455,25 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
     )
 
-    survey_questions = [
-        {"question": survey.question, "answers": survey.answers}
-        for survey in survey_questions
-        if survey.question
-    ]
+    questions_answers = []
+
+    if len(survey_questions) > 0:
+        for item in survey_questions:
+            answers = (
+                db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
+            )
+            questions_answers.append(
+                {
+                    "question": item.question,
+                    "answers": [data_answer.answer for data_answer in answers],
+                }
+            )
+
+    # survey_questions = [
+    #     {"question": survey.question, "answers": survey.answers}
+    #     for survey in survey_questions
+    #     if survey.question
+    # ]
 
     data.append(
         [
@@ -471,7 +485,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         ],
     )
     data_questions.append(["questions"])
-    for item in survey_questions:
+    for item in questions_answers:
         data_questions.append([item["question"], item["answers"]])
     log(
         log.INFO,

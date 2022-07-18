@@ -47,6 +47,33 @@ def test_create_survey(client: TestClient, db: Session):
     create_survey = response.json()
     assert create_survey
 
+    questions = create_survey["questions"]
+    assert questions
+
+    answers = []
+
+    for q in questions:
+        id = q["id"]
+        question = schema.AnswerRequest(
+            question=q["question"],
+            id=id,
+            survey_id=str(create_survey["id"]),
+        )
+
+        answer_data = schema.AnswerCreate(
+            answer=f"answer_{id}",
+            question=question,
+            session_id="jkabsfowab983063460954860sdga",
+        )
+
+        answers.append(answer_data.dict())
+
+    # create answers for question
+    response = client.post("/backend/answer/create_answer", json=answers)
+    assert response
+    create_answer = response.json()
+    assert create_answer
+
     uuid = create_survey["uuid"]
 
     # get report for survey

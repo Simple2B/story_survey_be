@@ -5,7 +5,7 @@ from .user_login import UserLogin
 from .token import Token, TokenData
 from .survey import Survey, SurveyCreate, SurveyDelete, SurveyReport, SurveyReportData
 from .question import Question, QuestionCreate
-from .answer import Answer, AnswerCreate
+from .answer import Answer, AnswerCreate, AnswerRequest
 from .stripe import (
     StripeSession,
     StripePortal,
