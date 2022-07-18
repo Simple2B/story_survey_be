@@ -464,6 +464,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         survey_questions = [
             {"question": survey.question, "answers": survey.answers}
             for survey in survey_questions
+            if survey.question
         ]
 
         data.append(
