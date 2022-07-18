@@ -45,10 +45,10 @@ def stripe_data_helper() -> Generator:
     BASIC_PRODUCT_KEY = "price_1LFwQJCMiCKtiI680YEDDamf"
     SESSION_ID = "su_gjhg3t88"
     SUBSCRIPTION_ID = "sub_jhg2538"
-    data = schema.StripeData(
+    data = schema.StripeSession(
         email=USER_EMAIL,
         stripe_customer=CUSTOMER_ID,
-        basic_product_key=BASIC_PRODUCT_KEY,
+        product_key=BASIC_PRODUCT_KEY,
         stripe_session_id=SESSION_ID,
         subscription_id=SUBSCRIPTION_ID,
     )
