@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     BASIC_PRICE_LOOKUP_KEY: str = "basic_product_price_key"
     ADVANCE_PRICE_LOOKUP_KEY: str = "advance_product_price_key"
 
+    REPORTS_DIR: str = "reports/"
+    SURVEY_REPORT_FILE: str = "new_survey_report.csv"
+
     class Config:
         env_file = ".env"
 

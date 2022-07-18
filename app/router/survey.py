@@ -1,12 +1,20 @@
+import os
 import re
+import csv
+from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
+from fastapi.responses import FileResponse
+from app.config import settings
 
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
 
 @router.get("/surveys", response_model=List[schema.Survey])
@@ -422,8 +430,73 @@ def update_survey(
         "user_id": user.id,
     }
 
-    # new_data_survey = new_data_survey.sort(
-    #     reverse=True, key=lambda e: e["questions"].id
-    # )
-
     return new_data_survey
+
+
+# @router.get("/report_survey/{uuid}", response_class=FileResponse)
+# async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
+#     """Get for admin report survey data"""
+#     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
+#     survey
+#     with open(
+#         os.path.join(
+#             BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE
+#         ),
+#         "w",
+#         newline="",
+#     ) as report_file:
+#         report = csv.writer(report_file)
+#         data = [
+#             [
+#                 "user",
+#                 "title",
+#                 "description",
+#                 "created_at",
+#                 "published",
+#                 ["questions"],
+#             ]
+#         ]
+
+#         survey_id = survey.id
+#         survey_user = survey.user.email
+#         survey_title = survey.title
+#         survey_description = survey.description
+#         survey_created_at = survey.created_at.strftime("%H:%M:%S %b %d %Y")
+#         survey_published = survey.published
+
+#         survey_questions = (
+#             db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
+#         )
+
+#         survey_questions = [
+#             {"question": survey.question, "answers": survey.answers}
+#             for survey in survey_questions
+#         ]
+
+#         data.append(
+#             [
+#                 survey_user,
+#                 survey_title,
+#                 survey_description,
+#                 survey_created_at,
+#                 survey_published,
+#                 survey_questions,
+#             ],
+#         )
+
+#         log(
+#             log.INFO,
+#             "filter_data_for_report_of_visit: create report data [%s]",
+#             data,
+#         )
+#         report.writerows(data)
+
+#         log(
+#             log.INFO,
+#             "filter_data_for_report_of_visit: write data (count of visit in data [%d]) to csv file",
+#             len(data),
+#         )
+
+#     return FileResponse(
+#         os.path.join(BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
+#     )

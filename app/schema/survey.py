@@ -35,9 +35,18 @@ class Survey(SurveyBase):
     published: Optional[bool]
 
 
-# class QuestionAnswer(SurveyBase);
-#     question_id: int
-#     answers:
+class SurveyReport(SurveyBase):
+    uuid: int
+
+
+class SurveyReportData(SurveyBase):
+    title: Optional[str]
+    description: Optional[str]
+    created_at: Optional[str]
+    published: Optional[bool]
+    questions: Optional[List]
+    answers: Optional[List]
+
 
 # class SurveyWithAnswer(SurveyBase):
 #     id: int
