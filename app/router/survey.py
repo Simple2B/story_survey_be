@@ -445,10 +445,9 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         newline="",
     ) as report_file:
         report = csv.writer(report_file)
-        data = [
-            ["user", "title", "description", "created_at", "published", "questions"]
-        ]
-        data2 = [["questions", "answers"]]
+        data = [["user", "title", "description", "created_at", "published"]]
+
+        data_questions = []
 
         survey_id = survey.id
         survey_user = survey.user.email
@@ -474,15 +473,18 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
                 survey_description,
                 survey_created_at,
                 survey_published,
-                survey_questions,
             ],
         )
+        data_questions.append(["questions"])
+        for item in survey_questions:
+            data_questions.append([item["question"], item["answers"]])
         log(
             log.INFO,
             "formed_report_survey: create report data [%s]",
             data,
         )
         report.writerows(data)
+        report.writerows(data_questions)
 
     return FileResponse(
         os.path.join(BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
