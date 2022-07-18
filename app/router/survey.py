@@ -1,5 +1,6 @@
 import os
 import re
+import io
 import csv
 from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
@@ -8,8 +9,7 @@ from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
-from starlette.responses import FileResponse
-from app.config import settings
+from starlette.responses import StreamingResponse
 
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
 
@@ -433,59 +433,58 @@ def update_survey(
     return new_data_survey
 
 
-@router.get("/report_survey/{uuid}", response_class=FileResponse)
+@router.get("/report_survey/{uuid}", response_class=StreamingResponse)
 async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     """Get for admin report survey data"""
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
-    with open(
-        os.path.join(
-            BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE
-        ),
-        "w",
-        newline="",
-    ) as report_file:
-        report = csv.writer(report_file)
-        data = [["user", "title", "description", "created_at", "published"]]
+    report_file = io.StringIO()
 
-        data_questions = []
+    report = csv.writer(report_file)
+    data = [["user", "title", "description", "created_at", "published"]]
 
-        survey_id = survey.id
-        survey_user = survey.user.email
-        survey_title = survey.title
-        survey_description = survey.description
-        survey_created_at = survey.created_at.strftime("%H:%M:%S %b %d %Y")
-        survey_published = survey.published
+    data_questions = []
 
-        survey_questions = (
-            db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
-        )
+    survey_id = survey.id
+    survey_user = survey.user.email
+    survey_title = survey.title
+    survey_description = survey.description
+    survey_created_at = survey.created_at.strftime("%H:%M:%S %b %d %Y")
+    survey_published = survey.published
 
-        survey_questions = [
-            {"question": survey.question, "answers": survey.answers}
-            for survey in survey_questions
-            if survey.question
-        ]
-
-        data.append(
-            [
-                survey_user,
-                survey_title,
-                survey_description,
-                survey_created_at,
-                survey_published,
-            ],
-        )
-        data_questions.append(["questions"])
-        for item in survey_questions:
-            data_questions.append([item["question"], item["answers"]])
-        log(
-            log.INFO,
-            "formed_report_survey: create report data [%s]",
-            data,
-        )
-        report.writerows(data)
-        report.writerows(data_questions)
-
-    return FileResponse(
-        os.path.join(BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
+    survey_questions = (
+        db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
     )
+
+    survey_questions = [
+        {"question": survey.question, "answers": survey.answers}
+        for survey in survey_questions
+        if survey.question
+    ]
+
+    data.append(
+        [
+            survey_user,
+            survey_title,
+            survey_description,
+            survey_created_at,
+            survey_published,
+        ],
+    )
+    data_questions.append(["questions"])
+    for item in survey_questions:
+        data_questions.append([item["question"], item["answers"]])
+    log(
+        log.INFO,
+        "formed_report_survey: create report data [%s]",
+        data,
+    )
+    report.writerows(data)
+    report.writerows(data_questions)
+
+    buf = io.BytesIO()
+    buf.write(report_file.getvalue().encode())
+    buf.seek(0)
+
+    buf.name = "report_survey.csv"
+
+    return StreamingResponse(buf, media_type="text/csv")
