@@ -21,4 +21,4 @@ def get_history(db: Session = Depends(get_db)):
 # /backend/history/users, just request
 # pagination
 # username, email, surveys (titles), questions
-# All from tables User, Stripe, survey, question, all answers with session_id
+# All from tables User, Subscription, survey, question, all answers with session_id

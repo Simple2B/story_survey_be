@@ -47,6 +47,12 @@ def test_create_survey(client: TestClient, db: Session):
     create_survey = response.json()
     assert create_survey
 
+    # uuid = create_survey["uuid"]
+
+    # get report for survey
+    # response = client.get(f"/backend/survey/report_survey/{uuid}")
+    # assert response
+
     # get surveys for user
     response = client.get(f"/backend/survey/{EMAIL}")
     assert response

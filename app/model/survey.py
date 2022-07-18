@@ -15,9 +15,9 @@ class Survey(Base):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), default=gen_uuid, nullable=True)
-    title = Column(String(628), nullable=False)
-    description = Column(String(1256), nullable=True)
-    successful_message = Column(String(628), nullable=True)
+    title = Column(String(512), nullable=False)
+    description = Column(String(1024), nullable=True)
+    successful_message = Column(String(512), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
     published = Column(Boolean, default=True)
 
