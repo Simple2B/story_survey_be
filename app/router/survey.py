@@ -437,7 +437,6 @@ def update_survey(
 async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     """Get for admin report survey data"""
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
-    survey
     with open(
         os.path.join(
             BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE
