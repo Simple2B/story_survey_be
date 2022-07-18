@@ -8,7 +8,7 @@ from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
-from fastapi.responses import FileResponse
+from starlette.responses import FileResponse
 from app.config import settings
 
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
@@ -486,17 +486,13 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
 
         log(
             log.INFO,
-            "filter_data_for_report_of_visit: create report data [%s]",
+            "formed_report_survey: create report data [%s]",
             data,
         )
         report.writerows(data)
 
-        log(
-            log.INFO,
-            "filter_data_for_report_of_visit: write data (count of visit in data [%d]) to csv file",
-            len(data),
-        )
-
-    return FileResponse(
+    file = FileResponse(
         os.path.join(BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
     )
+
+    return file
