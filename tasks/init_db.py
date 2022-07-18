@@ -8,6 +8,12 @@ NUM_TEST_POSTS = 3
 
 admins = [
     {
+        "username": "Alexandr Yablunovsky",
+        "password": "admin",
+        "email": "yablunovsky.a@gmail.com",
+        "role": User.UserRole.Admin,
+    },
+    {
         "username": settings.ADMIN_USER,
         "password": settings.ADMIN_PASS,
         "email": settings.ADMIN_EMAIL,
