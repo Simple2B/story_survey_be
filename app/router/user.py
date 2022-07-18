@@ -166,11 +166,6 @@ def get_user_with_stripe_info(user, db):
         ]
         if len(get_surveys_for_user(user, db)) > 0
         else [],
-        "surveys": [
-            get_survey_info(survey) for survey in get_surveys_for_user(user, db)
-        ]
-        if len(get_surveys_for_user(user, db)) > 0
-        else [],
     }
 
 
