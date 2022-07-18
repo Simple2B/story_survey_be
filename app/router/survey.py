@@ -201,7 +201,8 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
     log(log.INFO, "get_survey: questions [%s]", questions)
 
     if len(questions) > 1:
-        questions.sort(key=lambda x: x.question, reverse=True)
+        # questions.sort(key=lambda x: x.id)
+        questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     return {
         "id": survey.id,
@@ -231,7 +232,7 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
     )
 
     if len(questions) > 1:
-        questions.sort(key=lambda x: x.question, reverse=True)
+        questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
 
