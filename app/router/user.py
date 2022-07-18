@@ -13,25 +13,7 @@ def get_users(db: Session = Depends(get_db)):
     users = db.query(model.User).all()
     log(log.INFO, f"get_users: number of users {len(users)}")
     if len(users) > 0:
-        return [
-            {
-                "id": user.id,
-                "uuid": user.uuid,
-                "username": user.username,
-                "email": user.email,
-                "created_at": user.created_at,
-                "role": user.role,
-                "image": user.image,
-                "surveys": [
-                    get_survey_info(survey) for survey in get_surveys_for_user(user, db)
-                ]
-                if len(get_surveys_for_user(user, db)) > 0
-                else [],
-                "cancel_at_period_end": get_stripe_cancel_at_period_end(user, db),
-            }
-            for user in users
-        ]
-
+        return [get_user_with_stripe_info(user, db) for user in users]
     return users
 
 
@@ -50,37 +32,6 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
     log(log.INFO, f"create_user: user {user}")
 
     return get_user_with_stripe_info(user, db)
-
-    # customer_subscription = (
-    #     db.query(model.Subscription).filter_by(user_id=user.id).first()
-    # )
-
-    # subscription_info = None
-
-    # if customer_subscription:
-    #     subscription_info = {
-    #         "type": customer_subscription.type,
-    #         "customer_id": customer_subscription.customer_id,
-    #         "session_id": customer_subscription.session_id,
-    #         "cancel_at": customer_subscription.cancel_at,
-    #         "cancel_at_period_end": customer_subscription.cancel_at_period_end,
-    #         "subscription_id": customer_subscription.subscription_id,
-    #         "product_id": customer_subscription.product_id,
-    #     }
-
-    #     log(log.INFO, f"create_user: customer id {customer_subscription.customer_id}")
-
-    # return {
-    #     "id": user.id,
-    #     "uuid": user.uuid,
-    #     "username": user.username,
-    #     "email": user.email,
-    #     "created_at": user.created_at,
-    #     "role": user.role,
-    #     "image": user.image,
-    #     "subscription_info": subscription_info,
-    #     # "surveys": user.,
-    # }
 
 
 @router.get("/id/{id}", response_model=schema.UserOut)
@@ -133,15 +84,6 @@ def get_user_stripe_info(
 
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
-
-    # stripe_info = (
-    #     db.query(model.Subscription)
-    #     .filter(model.Subscription.user_id == user.id)
-    #     .first()
-    # )
-
-    # if not stripe_info:
-    #     return get_info_user(user, db)
 
     return get_user_with_stripe_info(user, db)
 
@@ -224,29 +166,12 @@ def get_user_with_stripe_info(user, db):
         ]
         if len(get_surveys_for_user(user, db)) > 0
         else [],
-        # "surveys": user.,
+        "surveys": [
+            get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+        ]
+        if len(get_surveys_for_user(user, db)) > 0
+        else [],
     }
-
-    # return {
-    #     "id": user.id,
-    #     "uuid": user.uuid,
-    #     "username": user.username,
-    #     "email": user.email,
-    #     "created_at": user.created_at,
-    #     "role": user.role,
-    #     "image": user.image,
-    #     "customer_id": stripe_info.customer_id,
-    #     "session_id": stripe_info.session_id,
-    #     "type": stripe_info.type,
-    #     "subscription_id": stripe_info.subscription_id,
-    #     # "cancel_at_period_end": stripe_info.cancel_at_period_end,
-    #     "product_id": stripe_info.product_id,
-    #     "surveys": [
-    #         get_survey_info(survey) for survey in get_surveys_for_user(user, db)
-    #     ]
-    #     if len(get_surveys_for_user(user, db)) > 0
-    #     else [],
-    # }
 
 
 def get_stripe_cancel_at_period_end(user, db):
