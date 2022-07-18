@@ -12,14 +12,12 @@ class CreateOrDeleteCustomer(Subscription):
     stripe_customer: str
 
 
-class StripeData(Subscription):
+class StripeSession(Subscription):
     session: Optional[dict]
     email: str
-    basic_product_key: Optional[str]
-    advance_product_key: Optional[str]
     stripe_customer: str
+    product_key: Optional[str]
     stripe_session_id: str
-    subscription_id: Optional[str]
 
 
 class StripeSubscription(Subscription):
@@ -30,6 +28,10 @@ class StripeSubscription(Subscription):
     subscription_id: Optional[str]
     cancel_at_period_end: Optional[bool]
     subscription_id: str
+
+
+class StripeCustomer(Subscription):
+    customer_id: str
 
 
 class StripePortal(Subscription):
