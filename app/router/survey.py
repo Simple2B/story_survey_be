@@ -438,9 +438,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     """Get for admin report survey data"""
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
     with open(
-        os.path.join(
-            BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE
-        ),
+        os.path.join("/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE),
         "w",
         newline="",
     ) as report_file:
@@ -487,5 +485,5 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         report.writerows(data_questions)
 
     return FileResponse(
-        os.path.join(BASE_DIR + "/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
+        os.path.join("/" + settings.REPORTS_DIR, settings.SURVEY_REPORT_FILE)
     )
