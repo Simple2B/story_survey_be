@@ -9,8 +9,8 @@ from app.logger import log
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
 
 
-@router.get("/surveys", response_model=List[schema.Survey])
-def get_surveys(db: Session = Depends(get_db)):
+@router.get("/surveys", response_model=schema.ServeysDataResult)
+def get_surveys(page: int = None, db: Session = Depends(get_db)):
     surveys = db.query(model.Survey).all()
     log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
@@ -49,7 +49,7 @@ def get_surveys(db: Session = Depends(get_db)):
             }
         )
 
-    return surveys_with_question
+    return schema.ServeysDataResult(data=surveys_with_question[:page], data_length=len(surveys_with_question))
 
 
 @router.get("/{email}", response_model=List[schema.Survey])
