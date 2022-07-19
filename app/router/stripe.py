@@ -82,13 +82,11 @@ def delete_stripe_customer(data: schema.StripeCustomer, db: Session = Depends(ge
         Response(status_code=404)
 
     # check existance of such customer_id
-    stripe_customer = (
-        db.query(model.Subscription)
-        .filter(model.Subscription.customer_id == data.customer_id)
-        .first()
+    stripe_customer = db.query(model.Subscription).filter(
+        model.Subscription.customer_id == data.customer_id
     )
 
-    if not stripe_customer:
+    if not stripe_customer.first():
         log(log.ERROR, "delete_customer: customer doesn't exists")
         Response(status_code=404)
 
@@ -97,7 +95,7 @@ def delete_stripe_customer(data: schema.StripeCustomer, db: Session = Depends(ge
         f"delete_customer: customer {data.customer_id} exists: {bool(stripe_customer)}",
     )
 
-    db.delete(stripe_customer)
+    stripe_customer.delete()
     db.commit()
     log(log.INFO, "delete_customer: customer was deleted")
     return Response(status_code=204)
