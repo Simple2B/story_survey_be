@@ -362,6 +362,23 @@ def update_survey(
         "user_id": user.id,
     }
 
+    for item in new_questions:
+        updated_questions = sorted(
+            updated_questions, key=lambda x: (x.question == "", x.question)
+        )
+        # updated_questions = updated_questions[:-1]
+        for updated_question in updated_questions:
+            if updated_question.id == item["id"]:
+                updated_question.question = item["question"]
+                updated_question.survey_id = edit_survey.id
+                db.commit()
+                db.refresh(updated_question)
+
+        updated_questions = sorted(updated_questions, key=lambda x: x.id)
+
+        updated_survey.update(data_edit_survey, synchronize_session=False)
+        db.commit()
+
     if len(deleted_questions) > 0:
         for question in deleted_questions:
             answers = db.query(model.Answer).filter(
@@ -396,19 +413,6 @@ def update_survey(
                 log.INFO,
                 f"update_survey: question '{question}' created for survey {question}",
             )
-        updated_survey.update(data_edit_survey, synchronize_session=False)
-        db.commit()
-
-    for item in new_questions:
-        for updated_question in updated_questions:
-            if updated_question.id == item["id"]:
-                updated_question.question = item["question"]
-                updated_question.survey_id = edit_survey.id
-                db.commit()
-                db.refresh(updated_question)
-
-        updated_questions = sorted(updated_questions, key=lambda x: x.id)
-
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
