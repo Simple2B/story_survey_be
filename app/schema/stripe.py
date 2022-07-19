@@ -30,6 +30,10 @@ class StripeSubscription(Subscription):
     subscription_id: str
 
 
+class DeleteSubscription(Subscription):
+    subscription_id: str
+
+
 class StripeCustomer(Subscription):
     customer_id: str
 
