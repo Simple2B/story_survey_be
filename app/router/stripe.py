@@ -250,7 +250,6 @@ def update_subscription(data: schema.StripeSubscription, db: Session = Depends(g
 
     stripe_data_subscription.cancel_at_period_end = cancel_at_period_end
     stripe_data_subscription.cancel_at = datetime.now() if cancel_at else None
-    db.add(stripe_data_subscription)
     db.commit()
     db.refresh(stripe_data_subscription)
 
@@ -258,7 +257,7 @@ def update_subscription(data: schema.StripeSubscription, db: Session = Depends(g
 
 
 @router.post("/delete_subscription", status_code=204)
-def delete_subscription(data: schema.StripeSubscription, db: Session = Depends(get_db)):
+def delete_subscription(data: schema.DeleteSubscription, db: Session = Depends(get_db)):
     """
     This route deletes row with accepted subscription_id in the stripe_data model
     You can use it when user stop his type
@@ -291,7 +290,6 @@ def delete_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     stripe_data.type = model.Subscription.SubscriptionType.Basic
 
     db.commit()
-    # db.refresh(stripe_data)
     log(
         log.INFO,
         f"delete_subscription: row with subscription_id {data.subscription_id} was deleted",
