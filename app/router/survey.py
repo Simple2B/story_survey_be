@@ -56,8 +56,11 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
                 "published": survey.published,
             }
         )
+        from datetime import datetime
 
-    return schema.ServeysDataResult(data=surveys_with_question[:page], data_length=len(surveys_with_question))
+    sorted_surveys = sorted(surveys_with_question, key=lambda value: value['created_at'], reverse=True)
+
+    return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(surveys_with_question))
 
 
 @router.get("/{email}", response_model=List[schema.Survey])
