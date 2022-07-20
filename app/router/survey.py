@@ -359,6 +359,7 @@ def update_survey(
         "title": survey.title,
         "description": survey.description,
         "successful_message": survey.successful_message,
+        "published": survey.published,
         "user_id": user.id,
     }
 
