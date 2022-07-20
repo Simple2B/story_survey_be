@@ -1,12 +1,20 @@
+import os
 import re
+import io
+import csv
+from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
 from app.logger import log
+from starlette.responses import StreamingResponse
 
 router = APIRouter(prefix="/backend/survey", tags=["Surveys"])
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
 
 @router.get("/surveys", response_model=schema.ServeysDataResult)
@@ -201,7 +209,8 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
     log(log.INFO, "get_survey: questions [%s]", questions)
 
     if len(questions) > 1:
-        questions.sort(key=lambda x: x.question, reverse=True)
+        # questions.sort(key=lambda x: x.id)
+        questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     return {
         "id": survey.id,
@@ -231,7 +240,7 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
     )
 
     if len(questions) > 1:
-        questions.sort(key=lambda x: x.question, reverse=True)
+        questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
 
@@ -353,6 +362,23 @@ def update_survey(
         "user_id": user.id,
     }
 
+    for item in new_questions:
+        updated_questions = sorted(
+            updated_questions, key=lambda x: (x.question == "", x.question)
+        )
+        # updated_questions = updated_questions[:-1]
+        for updated_question in updated_questions:
+            if updated_question.id == item["id"]:
+                updated_question.question = item["question"]
+                updated_question.survey_id = edit_survey.id
+                db.commit()
+                db.refresh(updated_question)
+
+        updated_questions = sorted(updated_questions, key=lambda x: x.id)
+
+        updated_survey.update(data_edit_survey, synchronize_session=False)
+        db.commit()
+
     if len(deleted_questions) > 0:
         for question in deleted_questions:
             answers = db.query(model.Answer).filter(
@@ -390,19 +416,6 @@ def update_survey(
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
-    for item in new_questions:
-        for updated_question in updated_questions:
-            if updated_question.id == item["id"]:
-                updated_question.question = item["question"]
-                updated_question.survey_id = edit_survey.id
-                db.commit()
-                db.refresh(updated_question)
-
-        updated_questions = sorted(updated_questions, key=lambda x: x.id)
-
-        updated_survey.update(data_edit_survey, synchronize_session=False)
-        db.commit()
-
     data_survey = updated_survey.first()
     questions = (
         db.query(model.Question)
@@ -421,8 +434,75 @@ def update_survey(
         "user_id": user.id,
     }
 
-    # new_data_survey = new_data_survey.sort(
-    #     reverse=True, key=lambda e: e["questions"].id
-    # )
-
     return new_data_survey
+
+
+@router.get("/report_survey/{uuid}", response_class=StreamingResponse)
+async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
+    """Get for admin report survey data"""
+    survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
+    report_file = io.StringIO()
+
+    report = csv.writer(report_file)
+    data = [["user", "title", "description", "created_at", "published"]]
+
+    data_questions = []
+
+    survey_id = survey.id
+    survey_user = survey.user.email
+    survey_title = survey.title
+    survey_description = survey.description
+    survey_created_at = survey.created_at.strftime("%H:%M:%S %b %d %Y")
+    survey_published = survey.published
+
+    survey_questions = (
+        db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
+    )
+
+    questions_answers = []
+
+    if len(survey_questions) > 0:
+        for item in survey_questions:
+            answers = (
+                db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
+            )
+            questions_answers.append(
+                {
+                    "question": item.question,
+                    "answers": [data_answer.answer for data_answer in answers],
+                }
+            )
+
+    # survey_questions = [
+    #     {"question": survey.question, "answers": survey.answers}
+    #     for survey in survey_questions
+    #     if survey.question
+    # ]
+
+    data.append(
+        [
+            survey_user,
+            survey_title,
+            survey_description,
+            survey_created_at,
+            survey_published,
+        ],
+    )
+    data_questions.append(["questions"])
+    for item in questions_answers:
+        data_questions.append([item["question"], item["answers"]])
+    log(
+        log.INFO,
+        "formed_report_survey: create report data [%s]",
+        data,
+    )
+    report.writerows(data)
+    report.writerows(data_questions)
+
+    buf = io.BytesIO()
+    buf.write(report_file.getvalue().encode())
+    buf.seek(0)
+
+    buf.name = "report_survey.csv"
+
+    return StreamingResponse(buf, media_type="text/csv")

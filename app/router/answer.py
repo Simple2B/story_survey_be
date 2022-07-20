@@ -1,5 +1,5 @@
 from fastapi import HTTPException, Response, Depends, APIRouter
-from typing import List
+from typing import List, Union
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -15,7 +15,11 @@ def get_answers(db: Session = Depends(get_db)):
     return answers
 
 
-@router.post("/create_answer", status_code=201, response_model=List[schema.Answer])
+@router.post(
+    "/create_answer",
+    status_code=201,
+    response_model=Union[List[schema.Answer], schema.AnswerInfoMessage],
+)
 def create_answer(
     answer_info: List[schema.AnswerCreate],
     db: Session = Depends(get_db),
@@ -25,27 +29,62 @@ def create_answer(
     for item in answer_info:
         if len(item.session_id) > 0 and len(item.answer) > 0:
             # start_time = datetime.strptime(item.start_time, "%m/%d/%Y, %H:%M:%S")
-            create_session_next = model.SessionNext(
-                # timestamp_session_start=start_time,
-                # timestamp_session_end=item.end_time,
-                session=item.session_id,
+            session_next = (
+                db.query(model.SessionNext)
+                .filter(model.SessionNext.session == item.session_id)
+                .first()
             )
-            db.add(create_session_next)
-            db.commit()
-            db.refresh(create_session_next)
-            sessions.append(create_session_next)
+            if not session_next:
+                session_next = model.SessionNext(
+                    # timestamp_session_start=start_time,
+                    # timestamp_session_end=item.end_time,
+                    session=item.session_id,
+                )
+                db.add(session_next)
+                db.commit()
+                db.refresh(session_next)
+                log(
+                    log.INFO,
+                    f"create_answer: session_next [{session_next.id}] created: {bool(session_next)}",
+                )
+                sessions.append(session_next)
+
+            log(
+                log.INFO,
+                f"create_answer: session_next [{session_next.session}] exists: {bool(session_next)}",
+            )
+
+            answer = (
+                db.query(model.Answer)
+                .filter(model.Answer.question_id == item.question.id)
+                .first()
+            )
+
+            if answer and answer.session_id == session_next.id and item.is_answer:
+                log(
+                    log.INFO,
+                    f"create_answer: answer [{answer.id}] was already created for this session",
+                )
+
+                return {
+                    "message": "You already answered this question",
+                    "question_id": answer.question_id,
+                }
+
             new_answer = model.Answer(
                 answer=item.answer,
                 question_id=item.question.id,
-                session_id=create_session_next.id,
+                session_id=session_next.id,
             )
             db.add(new_answer)
             db.commit()
             db.refresh(new_answer)
-            answers.append(new_answer)
 
-    # log(log.INFO, f"create_answer: [{len(answers)} answers were created]")
-    # log(log.INFO, f"create_answer: [{len(sessions)} sessions were created]")
+            log(
+                log.INFO,
+                f"create_answer: new_answer [{new_answer.id}] created",
+            )
+            answers.append(new_answer)
 
     if len(answers) > 0:
         answers = [
@@ -53,7 +92,10 @@ def create_answer(
                 "id": answer.id,
                 "answer": answer.answer,
                 "survey_id": answer.question.survey_id,
-                "created_at": answer.created_at,
+                "created_at": answer.created_at.strftime("%m/%d/%Y, %H:%M:%S")
+                if answer.created_at
+                else "",
+                "question_id": answer.question_id,
                 # "created_at": answer.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "session_id": answer.session_id,
                 # "session": ,
@@ -62,8 +104,7 @@ def create_answer(
             }
             for answer in answers
         ]
-
-    return answers
+        return answers
 
 
 @router.get("/{id}", response_model=schema.Answer)
