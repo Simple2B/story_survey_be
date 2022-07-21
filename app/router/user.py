@@ -31,7 +31,7 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
     log(log.INFO, f"create_user: user {user}")
 
-    return set_user(user, db)
+    return created_user_info(user, db)
 
 
 @router.get("/id/{id}", response_model=schema.UserOut)
@@ -169,7 +169,7 @@ def get_user_with_stripe_info(user, db):
     }
 
 
-def set_user(user, db):
+def created_user_info(user, db):
 
     customer_subscription = (
         db.query(model.Subscription).filter_by(user_id=user.id).first()
