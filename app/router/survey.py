@@ -64,8 +64,8 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
     return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(surveys_with_question))
 
 
-@router.get("/{email}", response_model=List[schema.Survey])
-def get_user_surveys(email: str, db: Session = Depends(get_db)):
+@router.get("/{email}", response_model=schema.ServeysDataResult)
+def get_user_surveys(page: int = None, email: str = "", db: Session = Depends(get_db)):
     user = db.query(model.User).filter(model.User.email == email).first()
 
     if not user:
@@ -114,7 +114,7 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
             }
         )
 
-    return surveys_with_question
+    return schema.ServeysDataResult(data=surveys_with_question[:page], data_length=len(surveys_with_question))
 
 
 @router.post("/create_survey", status_code=201, response_model=schema.Survey)
