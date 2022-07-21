@@ -31,7 +31,7 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
     log(log.INFO, f"create_user: user {user}")
 
-    return get_user_with_stripe_info(user, db)
+    return set_user(user, db)
 
 
 @router.get("/id/{id}", response_model=schema.UserOut)
@@ -85,7 +85,7 @@ def get_user_stripe_info(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    return set_user(user, db)
+    return get_user_with_stripe_info(user, db)
 
 
 # helper functions
