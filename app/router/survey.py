@@ -27,6 +27,8 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
         log(log.INFO, "get_surveys: surveys count [%d]", len(surveys))
         return surveys_with_question
 
+    surveys.sort(key=lambda survey: survey.created_at, reverse=True)
+
     for survey in surveys:
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
@@ -73,12 +75,13 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
 
     surveys = db.query(model.Survey).filter(model.Survey.user_id == user.id).all()
 
-    log(log.INFO, "get_survey: surveys count [%d]", len(surveys))
-
     surveys_with_question = []
     if not surveys:
-        log(log.INFO, "get_survey: surveys count [%d]", len(surveys))
+        log(log.INFO, f"get_survey: user {user.id} didn't have surveys")
         return surveys_with_question
+
+    log(log.INFO, "get_survey: surveys count [%d]", len(surveys))
+    surveys.sort(key=lambda survey: survey.created_at, reverse=True)
 
     for survey in surveys:
         questions = (
@@ -126,16 +129,16 @@ def create_survey(
 
     log(log.INFO, "create_survey: user [%s]", user)
 
-    published = False if survey.published else True
+    # published = False if survey.published else True
 
-    log(log.INFO, "create_survey: published [%s]", published)
+    # log(log.INFO, "create_survey: published [%s]", published)
 
     new_survey: model.Survey = model.Survey(
         title=survey.title,
         description=survey.description,
         successful_message=survey.successful_message,
         user_id=user.id,
-        published=published,
+        published=survey.published,
     )
     db.add(new_survey)
     db.commit()
@@ -361,6 +364,7 @@ def update_survey(
         "title": survey.title,
         "description": survey.description,
         "successful_message": survey.successful_message,
+        "published": survey.published,
         "user_id": user.id,
     }
 
