@@ -8,12 +8,16 @@ from app.logger import log
 router = APIRouter(prefix="/backend/user", tags=["Users"])
 
 
-@router.get("/get_users", response_model=List[schema.UserOut])
-def get_users(db: Session = Depends(get_db)):
+@router.get("/get_users", response_model=schema.AllUsers)
+def get_users(page: int = None, db: Session = Depends(get_db)):
     users = db.query(model.User).all()
     log(log.INFO, f"get_users: number of users {len(users)}")
+
     if len(users) > 0:
-        return [get_user_with_stripe_info(user, db) for user in users]
+        users_list = [get_user_with_stripe_info(user, db) for user in users]
+        sorted_users = sorted(users_list, key=lambda value: value["username"])
+        return schema.AllUsers(data=sorted_users[:page], data_length=len(sorted_users))
+
     return users
 
 
