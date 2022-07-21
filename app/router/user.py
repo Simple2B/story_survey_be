@@ -35,7 +35,7 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
     log(log.INFO, f"create_user: user {user}")
 
-    return get_user_with_stripe_info(user, db)
+    return set_user(user, db)
 
 
 @router.get("/id/{id}", response_model=schema.UserOut)
@@ -170,6 +170,41 @@ def get_user_with_stripe_info(user, db):
         ]
         if len(get_surveys_for_user(user, db)) > 0
         else [],
+    }
+
+
+def set_user(user, db):
+
+    customer_subscription = (
+        db.query(model.Subscription).filter_by(user_id=user.id).first()
+    )
+
+    subscription_info = None
+
+    if customer_subscription:
+        subscription_info = {
+            "type": customer_subscription.type,
+            "customer_id": customer_subscription.customer_id,
+            "session_id": customer_subscription.session_id,
+            "cancel_at": customer_subscription.cancel_at.strftime("%m/%d/%Y, %H:%M:%S")
+            if customer_subscription.cancel_at
+            else None,
+            "cancel_at_period_end": customer_subscription.cancel_at_period_end,
+            "subscription_id": customer_subscription.subscription_id,
+            "product_id": customer_subscription.product_id,
+        }
+
+        log(log.INFO, f"set_user: customer id {customer_subscription.customer_id}")
+
+    return {
+        "id": user.id,
+        "uuid": user.uuid,
+        "username": user.username,
+        "email": user.email,
+        "created_at": user.created_at,
+        "role": user.role,
+        "image": user.image,
+        "subscription_info": subscription_info,
     }
 
 
