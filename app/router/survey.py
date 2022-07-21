@@ -56,7 +56,6 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
                 "published": survey.published,
             }
         )
-        from datetime import datetime
 
     sorted_surveys = sorted(surveys_with_question, key=lambda value: value['created_at'], reverse=True)
 
@@ -509,3 +508,43 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     buf.name = "report_survey.csv"
 
     return StreamingResponse(buf, media_type="text/csv")
+
+
+def get_surveys_for_user(user, db):
+    return db.query(model.Survey).filter(model.Survey.user_id == user.id).all()
+
+
+def get_survey_info(survey: schema.Survey):
+    questions = []
+    for q in survey.questions:
+        if len(q.question) > 0:
+            questions.append(q)
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "questions": questions,
+        "published": survey.published,
+    }
+
+
+@router.get("/uuid/{uuid}", response_model=schema.ServeysDataResult)
+def get_servey_by_uuid(
+    page: int = None,
+    uuid: str = "",
+    db: Session = Depends(get_db),
+):
+
+    user = db.query(model.User).filter(model.User.uuid == uuid).first()
+
+    surveys_by_user = [get_survey_info(survey) for survey in get_surveys_for_user(user, db)]
+
+    if not user:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    sorted_surveys = sorted(surveys_by_user, key=lambda value: value['created_at'], reverse=True)
+
+    return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(sorted_surveys))
