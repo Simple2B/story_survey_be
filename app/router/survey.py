@@ -160,10 +160,6 @@ def create_survey(
 
     log(log.INFO, "create_survey: user [%s]", user)
 
-    # published = False if survey.published else True
-
-    # log(log.INFO, "create_survey: published [%s]", published)
-
     new_survey: model.Survey = model.Survey(
         title=survey.title,
         description=survey.description,
@@ -543,3 +539,30 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     buf.name = "report_survey.csv"
 
     return StreamingResponse(buf, media_type="text/csv")
+
+
+@router.post("/info_survey", response_model=bool)
+def check_answer_the_question(
+    req_data: schema.SurveyNextSession, db: Session = Depends(get_db)
+):
+    survey = db.query(model.Survey).filter(model.Survey.uuid == req_data.uuid).first()
+    if not survey:
+        log(log.INFO, f"get_answer_next_session_of_survey: survey not found")
+        return "Survey not found"
+
+    log(log.INFO, f"get_answer_next_session_of_survey: [{survey.id}] survey exist")
+
+    questions = survey.questions
+    if len(questions) > 0:
+        for question in questions:
+            answers = question.answers
+            if len(answers) > 0:
+                sessions = []
+                for answer in answers:
+                    session = answer.session.session
+                    if session == req_data.session:
+                        sessions.append(session)
+                if len(sessions) > 0:
+                    return True
+
+    return False
