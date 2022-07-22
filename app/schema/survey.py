@@ -34,6 +34,7 @@ class Survey(SurveyBase):
     successful_message: Optional[str]
     published: Optional[bool]
 
+
 class ServeysDataResult(BaseModel):
     data: list
     data_length: int

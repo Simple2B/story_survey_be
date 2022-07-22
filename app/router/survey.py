@@ -4,10 +4,7 @@ import io
 import csv
 from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
-from typing import List
-import time
 
-from sqlalchemy import and_, func
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -105,7 +102,7 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
 
 
 @router.get("/{email}", response_model=schema.ServeysDataResult)
-def get_user_surveys(page: int = None, email: str = "", db: Session = Depends(get_db)):
+def get_user_surveys(page: int = None, query: str = "", email: str = "", db: Session = Depends(get_db)):
     user = db.query(model.User).filter(model.User.email == email).first()
 
     if not user:
@@ -153,6 +150,10 @@ def get_user_surveys(page: int = None, email: str = "", db: Session = Depends(ge
                 "published": survey.published,
             }
         )
+
+    if (len(query)) > 0:
+        search_survey = [item for item in surveys_with_question if query.lower() in item["title"].lower()]
+        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
 
     return schema.ServeysDataResult(data=surveys_with_question[:page], data_length=len(surveys_with_question))
 
@@ -574,6 +575,7 @@ def get_survey_info(survey: schema.Survey):
 @router.get("/uuid/{uuid}", response_model=schema.ServeysDataResult)
 def get_servey_by_uuid(
     page: int = None,
+    query: str = "",
     uuid: str = "",
     db: Session = Depends(get_db),
 ):
@@ -587,6 +589,10 @@ def get_servey_by_uuid(
 
     sorted_surveys = sorted(surveys_by_user, key=lambda value: value['created_at'], reverse=True)
 
+    if (len(query)) > 0:
+        search_survey = [item for item in sorted_surveys if query.lower() in item["title"].lower()]
+        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+
     return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(sorted_surveys))
 
 
@@ -596,7 +602,7 @@ def check_answer_the_question(
 ):
     survey = db.query(model.Survey).filter(model.Survey.uuid == req_data.uuid).first()
     if not survey:
-        log(log.INFO, f"get_answer_next_session_of_survey: survey not found")
+        log(log.INFO, "get_answer_next_session_of_survey: survey not found")
         return "Survey not found"
 
     log(log.INFO, f"get_answer_next_session_of_survey: [{survey.id}] survey exist")

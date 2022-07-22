@@ -1,5 +1,4 @@
 from fastapi import HTTPException, Depends, APIRouter
-from typing import List
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -9,13 +8,18 @@ router = APIRouter(prefix="/backend/user", tags=["Users"])
 
 
 @router.get("/get_users", response_model=schema.AllUsers)
-def get_users(page: int = None, db: Session = Depends(get_db)):
+def get_users(page: int = None, query: str = "", db: Session = Depends(get_db)):
     users = db.query(model.User).all()
     log(log.INFO, f"get_users: number of users {len(users)}")
 
     if len(users) > 0:
         users_list = [get_user_with_stripe_info(user, db) for user in users]
         sorted_users = sorted(users_list, key=lambda value: value["username"])
+
+        if (len(query)) > 0:
+            search_survey = [item for item in sorted_users if query.lower() in item["username"].lower()]
+            return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+
         return schema.AllUsers(data=sorted_users[:page], data_length=len(sorted_users))
 
     return users
