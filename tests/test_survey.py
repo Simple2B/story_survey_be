@@ -119,6 +119,25 @@ def test_create_survey(client: TestClient, db: Session):
     assert answers
     assert len(answers) == 3
 
+    # get survey with answer and check next session
+    req_data = {
+        "uuid": uuid,
+        "session": "jkabsfowab983063460954860sdga",
+    }
+    response = client.post("/backend/survey/info_survey", json=req_data)
+    assert response
+    res = response.json()
+    assert res == True
+    # if next session not found
+    req_data = {
+        "uuid": uuid,
+        "session": "klnjmkkfowab983063460954860sdga",
+    }
+    response = client.post("/backend/survey/info_survey", json=req_data)
+    assert response
+    res = response.json()
+    assert res == False
+
 
 def test_get_surveys(client: TestClient, db: Session):
     """Test for get_surveys() function from router/survey.py"""
