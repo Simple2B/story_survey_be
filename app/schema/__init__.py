@@ -9,6 +9,7 @@ from .survey import (
     SurveyDelete,
     SurveyReport,
     SurveyReportData,
+    SurveyNextSession,
 )
 from .question import Question, QuestionCreate
 from .answer import Answer, AnswerCreate, AnswerRequest, AnswerInfoMessage
