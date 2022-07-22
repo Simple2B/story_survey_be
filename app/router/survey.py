@@ -5,6 +5,9 @@ import csv
 from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
 from typing import List
+import time
+
+from sqlalchemy import and_, func
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -18,7 +21,7 @@ load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
 
 @router.get("/surveys", response_model=schema.ServeysDataResult)
-def get_surveys(page: int = None, db: Session = Depends(get_db)):
+def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)):
     surveys = db.query(model.Survey).all()
     log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
@@ -93,6 +96,10 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
         )
 
     sorted_surveys = sorted(surveys_with_question, key=lambda value: value['created_at'], reverse=True)
+
+    if (len(query)) > 0:
+        search_survey = [item for item in sorted_surveys if query.lower() in item["title"].lower()]
+        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
 
     return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(surveys_with_question))
 
