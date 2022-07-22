@@ -40,7 +40,40 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
 
         # questions = [item for item in questions if item.question]
 
-        log(log.INFO, "get_surveys: questions [%s]", questions)
+        log(log.INFO, "get_surveys: count of questions [%d]", len(questions))
+
+        questions_with_answers = []
+        for question in questions:
+            answers = (
+                db.query(model.Answer)
+                .filter(model.Answer.question_id == question.id)
+                .all()
+            )
+
+            if len(answers) > 0:
+                answers = [
+                    {
+                        "id": answer.id,
+                        "question_id": answer.question_id,
+                        "answer": answer.answer,
+                        "session": answer.session.session,
+                    }
+                    for answer in answers
+                ]
+                log(
+                    log.INFO,
+                    "get_surveys: answer [%d] for question [%d]",
+                    len(answers),
+                    question.id,
+                )
+
+            question = {
+                "id": question.id,
+                "question": question.question,
+                "answers": answers,
+                "survey_id": question.survey_id,
+            }
+            questions_with_answers.append(question)
 
         surveys_with_question.append(
             {
@@ -51,7 +84,7 @@ def get_surveys(page: int = None, db: Session = Depends(get_db)):
                 "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "user_id": survey.user_id,
                 "email": survey.user.email,
-                "questions": questions,
+                "questions": questions_with_answers,
                 "successful_message": survey.successful_message
                 if survey.successful_message
                 else "",
