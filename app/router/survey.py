@@ -547,7 +547,7 @@ def check_answer_the_question(
 ):
     survey = db.query(model.Survey).filter(model.Survey.uuid == req_data.uuid).first()
     if not survey:
-        log(log.INFO, f"get_answer_next_session_of_survey: survey not found")
+        log(log.INFO, "get_answer_next_session_of_survey: survey not found")
         return "Survey not found"
 
     log(log.INFO, f"get_answer_next_session_of_survey: [{survey.id}] survey exist")
