@@ -126,7 +126,8 @@ def test_create_survey(client: TestClient, db: Session):
     }
     response = client.post("/backend/survey/info_survey", json=req_data)
     assert response
-    response.json()
+    res = response.json()
+    assert res
     # if next session not found
     req_data = {
         "uuid": uuid,
@@ -134,7 +135,7 @@ def test_create_survey(client: TestClient, db: Session):
     }
     response = client.post("/backend/survey/info_survey", json=req_data)
     assert response
-    response.json()
+    res = response.json()
 
 
 def test_get_surveys(client: TestClient, db: Session):
