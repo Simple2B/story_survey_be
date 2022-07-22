@@ -52,15 +52,9 @@ class SurveyReportData(SurveyBase):
     answers: Optional[List]
 
 
-# class SurveyWithAnswer(SurveyBase):
-#     id: int
-#     uuid: Optional[str]
-#     title: str
-#     description: Optional[str]
-#     created_at: Optional[str]
-#     user_id: int
-#     email: Optional[str]
-#     questions: Optional[List]
+class SurveyNextSession(SurveyBase):
+    uuid: str
+    session: str
 
 
 class SurveyDelete(SurveyBase):
