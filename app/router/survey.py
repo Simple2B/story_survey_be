@@ -60,12 +60,11 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                     }
                     for answer in answers
                 ]
-                log(
-                    log.INFO,
-                    "get_surveys: answer [%d] for question [%d]",
-                    len(answers),
-                    question.id,
-                )
+            log(
+                log.INFO,
+                "get_surveys: answer [%d]",
+                len(answers),
+            )
 
             question = {
                 "id": question.id,
@@ -92,17 +91,27 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
             }
         )
 
-    sorted_surveys = sorted(surveys_with_question, key=lambda value: value['created_at'], reverse=True)
+    sorted_surveys = sorted(
+        surveys_with_question, key=lambda value: value["created_at"], reverse=True
+    )
 
     if (len(query)) > 0:
-        search_survey = [item for item in sorted_surveys if query.lower() in item["title"].lower()]
-        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+        search_survey = [
+            item for item in sorted_surveys if query.lower() in item["title"].lower()
+        ]
+        return schema.ServeysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
 
-    return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(surveys_with_question))
+    return schema.ServeysDataResult(
+        data=sorted_surveys[:page], data_length=len(surveys_with_question)
+    )
 
 
 @router.get("/{email}", response_model=schema.ServeysDataResult)
-def get_user_surveys(page: int = None, query: str = "", email: str = "", db: Session = Depends(get_db)):
+def get_user_surveys(
+    page: int = None, query: str = "", email: str = "", db: Session = Depends(get_db)
+):
     user = db.query(model.User).filter(model.User.email == email).first()
 
     if not user:
@@ -152,10 +161,18 @@ def get_user_surveys(page: int = None, query: str = "", email: str = "", db: Ses
         )
 
     if (len(query)) > 0:
-        search_survey = [item for item in surveys_with_question if query.lower() in item["title"].lower()]
-        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+        search_survey = [
+            item
+            for item in surveys_with_question
+            if query.lower() in item["title"].lower()
+        ]
+        return schema.ServeysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
 
-    return schema.ServeysDataResult(data=surveys_with_question[:page], data_length=len(surveys_with_question))
+    return schema.ServeysDataResult(
+        data=surveys_with_question[:page], data_length=len(surveys_with_question)
+    )
 
 
 @router.post("/create_survey", status_code=201, response_model=schema.Survey)
@@ -573,7 +590,7 @@ def get_survey_info(survey: schema.Survey):
 
 
 @router.get("/uuid/{uuid}", response_model=schema.ServeysDataResult)
-def get_servey_by_uuid(
+def get_survey_by_uuid(
     page: int = None,
     query: str = "",
     uuid: str = "",
@@ -582,18 +599,28 @@ def get_servey_by_uuid(
 
     user = db.query(model.User).filter(model.User.uuid == uuid).first()
 
-    surveys_by_user = [get_survey_info(survey) for survey in get_surveys_for_user(user, db)]
+    surveys_by_user = [
+        get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+    ]
 
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    sorted_surveys = sorted(surveys_by_user, key=lambda value: value['created_at'], reverse=True)
+    sorted_surveys = sorted(
+        surveys_by_user, key=lambda value: value["created_at"], reverse=True
+    )
 
     if (len(query)) > 0:
-        search_survey = [item for item in sorted_surveys if query.lower() in item["title"].lower()]
-        return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+        search_survey = [
+            item for item in sorted_surveys if query.lower() in item["title"].lower()
+        ]
+        return schema.ServeysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
 
-    return schema.ServeysDataResult(data=sorted_surveys[:page], data_length=len(sorted_surveys))
+    return schema.ServeysDataResult(
+        data=sorted_surveys[:page], data_length=len(sorted_surveys)
+    )
 
 
 @router.post("/info_survey", response_model=bool)
