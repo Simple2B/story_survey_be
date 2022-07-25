@@ -17,8 +17,14 @@ def get_users(page: int = None, query: str = "", db: Session = Depends(get_db)):
         sorted_users = sorted(users_list, key=lambda value: value["username"])
 
         if (len(query)) > 0:
-            search_survey = [item for item in sorted_users if query.lower() in item["username"].lower()]
-            return schema.ServeysDataResult(data=search_survey, data_length=len(search_survey))
+            search_survey = [
+                item
+                for item in sorted_users
+                if query.lower() in item["username"].lower()
+            ]
+            return schema.ServeysDataResult(
+                data=search_survey, data_length=len(search_survey)
+            )
 
         return schema.AllUsers(data=sorted_users[:page], data_length=len(sorted_users))
 
