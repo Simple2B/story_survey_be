@@ -22,6 +22,7 @@ def get_users(page: int = None, query: str = "", db: Session = Depends(get_db)):
                 for item in sorted_users
                 if query.lower() in item["username"].lower()
             ]
+
             return schema.SurveysDataResult(
                 data=search_survey, data_length=len(search_survey)
             )

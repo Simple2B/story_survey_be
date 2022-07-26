@@ -62,12 +62,11 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                     }
                     for answer in answers
                 ]
-                log(
-                    log.INFO,
-                    "get_surveys: answer [%d] for question [%d]",
-                    len(answers),
-                    question.id,
-                )
+            log(
+                log.INFO,
+                "get_surveys: answer [%d]",
+                len(answers),
+            )
 
             question = {
                 "id": question.id,
@@ -171,6 +170,7 @@ def get_user_surveys(
             for item in surveys_with_question
             if query.lower() in item["title"].lower()
         ]
+
         return schema.SurveysDataResult(
             data=search_survey, data_length=len(search_survey)
         )
