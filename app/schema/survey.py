@@ -35,7 +35,7 @@ class Survey(SurveyBase):
     published: Optional[bool]
 
 
-class ServeysDataResult(BaseModel):
+class SurveysDataResult(BaseModel):
     data: list
     data_length: int
 
