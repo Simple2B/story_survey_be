@@ -43,3 +43,8 @@ class UserOut(User):
     # product_id: Optional[str]
 
     surveys: Optional[List[Survey]]
+
+
+class AllUsers(BaseModel):
+    data: list
+    data_length: int

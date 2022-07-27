@@ -84,15 +84,15 @@ def test_create_survey(client: TestClient, db: Session):
     response = client.get(f"/backend/survey/{EMAIL}")
     assert response
     survey = response.json()
-    assert survey[0]["user_id"] == USER_ID
+    assert survey["data"][0]["user_id"] == USER_ID
 
     # get surveys
     response = client.get("/backend/survey/surveys/")
     assert response
     surveys = response.json()
-    assert len(surveys) == 1
+    assert len(surveys["data"]) == 1
 
-    questions = surveys[0]["questions"]
+    questions = surveys["data"][0]["questions"]
 
     # create answer
     answerInfo = []
@@ -118,6 +118,24 @@ def test_create_survey(client: TestClient, db: Session):
     answers = response.json()
     assert answers
     assert len(answers) == 3
+
+    # get survey with answer and check next session
+    req_data = {
+        "uuid": uuid,
+        "session": "jkabsfowab983063460954860sdga",
+    }
+    response = client.post("/backend/survey/info_survey", json=req_data)
+    assert response
+    res = response.json()
+    assert res
+    # if next session not found
+    req_data = {
+        "uuid": uuid,
+        "session": "klnjmkkfowab983063460954860sdga",
+    }
+    response = client.post("/backend/survey/info_survey", json=req_data)
+    assert response
+    res = response.json()
 
 
 def test_get_surveys(client: TestClient, db: Session):
@@ -182,7 +200,7 @@ def test_get_surveys(client: TestClient, db: Session):
     response = client.get("/backend/survey/surveys")
     assert response
     all_surveys = response.json()
-    assert len(all_surveys) == 6
+    assert len(all_surveys["data"]) == 6
 
     email = user2["email"]
 
@@ -190,10 +208,10 @@ def test_get_surveys(client: TestClient, db: Session):
     response = client.get(f"/backend/survey/{email}")
     assert response
     user_surveys = response.json()
-    assert len(user_surveys) == 5
+    assert len(user_surveys["data"]) == 5
 
     survey_to_delete = {
-        "survey_id": user_surveys[0]["id"],
+        "survey_id": user_surveys["data"][0]["id"],
         "email": email,
     }
 
@@ -206,4 +224,4 @@ def test_get_surveys(client: TestClient, db: Session):
     response = client.get(f"/backend/survey/{email}")
     assert response
     user_surveys = response.json()
-    assert len(user_surveys) == 4
+    assert len(user_surveys["data"]) == 4

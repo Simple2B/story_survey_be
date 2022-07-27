@@ -11,7 +11,7 @@ router = APIRouter(prefix="/backend/history", tags=["History"])
 def get_history(db: Session = Depends(get_db)):
 
     all_users = db.query(model.User).all()
-    log(log.INFO, f"get_history: {len(all_users)} exist")
+    log(log.INFO, "get_history: users [%d] exist", len(all_users))
     my_response = schema.History(users=all_users)
 
     return my_response

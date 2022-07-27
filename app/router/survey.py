@@ -4,7 +4,7 @@ import io
 import csv
 from dotenv import load_dotenv
 from fastapi import HTTPException, Response, Depends, APIRouter
-from typing import List
+
 from app import model, schema
 from app.database import get_db
 from sqlalchemy.orm import Session
@@ -17,15 +17,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 
 
-@router.get("/surveys", response_model=List[schema.Survey])
-def get_surveys(db: Session = Depends(get_db)):
+@router.get("/surveys", response_model=schema.SurveysDataResult)
+def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)):
     surveys = db.query(model.Survey).all()
-    log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
     surveys_with_question = []
     if not surveys:
-        log(log.INFO, "get_surveys: surveys count [%d]", len(surveys))
-        return surveys_with_question
+        log(log.INFO, "get_surveys: no surveys")
+        return schema.SurveysDataResult(
+            data=surveys_with_question, data_length=len(surveys_with_question)
+        )
+
+    log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
     surveys.sort(key=lambda survey: survey.created_at, reverse=True)
 
@@ -40,7 +43,39 @@ def get_surveys(db: Session = Depends(get_db)):
 
         # questions = [item for item in questions if item.question]
 
-        log(log.INFO, "get_surveys: questions [%s]", questions)
+        # log(log.INFO, "get_surveys: count of questions [%d]", len(questions))
+
+        questions_with_answers = []
+        for question in questions:
+            answers = (
+                db.query(model.Answer)
+                .filter(model.Answer.question_id == question.id)
+                .all()
+            )
+
+            if len(answers) > 0:
+                answers = [
+                    {
+                        "id": answer.id,
+                        "question_id": answer.question_id,
+                        "answer": answer.answer,
+                        "session": answer.session.session,
+                    }
+                    for answer in answers
+                ]
+            # log(
+            #     log.INFO,
+            #     "get_surveys: answer [%d]",
+            #     len(answers),
+            # )
+
+            question = {
+                "id": question.id,
+                "question": question.question,
+                "answers": answers,
+                "survey_id": question.survey_id,
+            }
+            questions_with_answers.append(question)
 
         surveys_with_question.append(
             {
@@ -51,7 +86,7 @@ def get_surveys(db: Session = Depends(get_db)):
                 "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                 "user_id": survey.user_id,
                 "email": survey.user.email,
-                "questions": questions,
+                "questions": questions_with_answers,
                 "successful_message": survey.successful_message
                 if survey.successful_message
                 else "",
@@ -59,11 +94,27 @@ def get_surveys(db: Session = Depends(get_db)):
             }
         )
 
-    return surveys_with_question
+    sorted_surveys = sorted(
+        surveys_with_question, key=lambda value: value["created_at"], reverse=True
+    )
+
+    if (len(query)) > 0:
+        search_survey = [
+            item for item in sorted_surveys if query.lower() in item["title"].lower()
+        ]
+        return schema.SurveysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
+
+    return schema.SurveysDataResult(
+        data=sorted_surveys[:page], data_length=len(surveys_with_question)
+    )
 
 
-@router.get("/{email}", response_model=List[schema.Survey])
-def get_user_surveys(email: str, db: Session = Depends(get_db)):
+@router.get("/{email}", response_model=schema.SurveysDataResult)
+def get_user_surveys(
+    page: int = None, query: str = "", email: str = "", db: Session = Depends(get_db)
+):
     user = db.query(model.User).filter(model.User.email == email).first()
 
     if not user:
@@ -76,7 +127,9 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
     surveys_with_question = []
     if not surveys:
         log(log.INFO, f"get_survey: user {user.id} didn't have surveys")
-        return surveys_with_question
+        return schema.SurveysDataResult(
+            data=surveys_with_question, data_length=len(surveys_with_question)
+        )
 
     log(log.INFO, "get_survey: surveys count [%d]", len(surveys))
     surveys.sort(key=lambda survey: survey.created_at, reverse=True)
@@ -112,7 +165,20 @@ def get_user_surveys(email: str, db: Session = Depends(get_db)):
             }
         )
 
-    return surveys_with_question
+    if (len(query)) > 0:
+        search_survey = [
+            item
+            for item in surveys_with_question
+            if query.lower() in item["title"].lower()
+        ]
+
+        return schema.SurveysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
+
+    return schema.SurveysDataResult(
+        data=surveys_with_question[:page], data_length=len(surveys_with_question)
+    )
 
 
 @router.post("/create_survey", status_code=201, response_model=schema.Survey)
@@ -126,10 +192,6 @@ def create_survey(
         return
 
     log(log.INFO, "create_survey: user [%s]", user)
-
-    # published = False if survey.published else True
-
-    # log(log.INFO, "create_survey: published [%s]", published)
 
     new_survey: model.Survey = model.Survey(
         title=survey.title,
@@ -182,7 +244,7 @@ def get_survey(id: str, db: Session = Depends(get_db)):
     questions = (
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
-    log(log.INFO, "get_survey: questions [%s]", questions)
+    log(log.INFO, "get_survey: questions [%d]", len(questions))
 
     return {
         "id": survey.id,
@@ -205,13 +267,13 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
     if not survey:
         raise HTTPException(status_code=404, detail="This survey was not found")
 
-    log(log.INFO, "get_survey: survey [%s]", survey)
+    log(log.INFO, "get_survey: survey [%d]", survey.id)
     questions = (
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
     log(log.INFO, "get_survey: questions [%s]", questions)
 
-    if len(questions) > 1:
+    if questions:
         # questions.sort(key=lambda x: x.id)
         questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
@@ -242,7 +304,9 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
 
-    if len(questions) > 1:
+    questions_length = len(questions)
+
+    if questions_length > 1:
         questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
@@ -285,7 +349,7 @@ def delete_survey(
         db.query(model.Survey).filter((model.Survey.user_id == user.id)).all()
     )
 
-    if len(user_surveys) > 0:
+    if user_surveys:
         for survey in user_surveys:
             if data.survey_id == survey.id:
                 del_survey = (
@@ -337,13 +401,18 @@ def update_survey(
     user = db.query(model.User).filter(model.User.email == survey.email).first()
 
     if not user:
+        log(log.INFO, "update_survey: user with this key not found")
         raise HTTPException(status_code=404, detail="User with this key not found")
+
+    log(log.INFO, "update_survey: user [%s]", user)
 
     updated_survey = db.query(model.Survey).filter_by(id=id)
     # update_question
 
     if not updated_survey.first():
         raise HTTPException(status_code=404, detail="This survey was not found")
+
+    log(log.INFO, "update_survey: survey [%s] for update", updated_survey)
 
     edit_survey = updated_survey.first()
 
@@ -367,6 +436,7 @@ def update_survey(
     }
 
     for item in new_questions:
+        log(log.INFO, "update_survey: new_questions count [%d]", len(new_questions))
         updated_questions = sorted(
             updated_questions, key=lambda x: (x.question == "", x.question)
         )
@@ -383,7 +453,12 @@ def update_survey(
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
-    if len(deleted_questions) > 0:
+    if deleted_questions:
+        log(
+            log.INFO,
+            "update_survey: deleted_questions count [%d]",
+            len(deleted_questions),
+        )
         for question in deleted_questions:
             answers = db.query(model.Answer).filter(
                 model.Answer.question_id == question["id"]
@@ -404,7 +479,12 @@ def update_survey(
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
-    if len(create_question) > 0:
+    if create_question:
+        log(
+            log.INFO,
+            "update_survey: create_question count [%d]",
+            len(deleted_questions),
+        )
         for question in create_question:
             new_question = model.Question(
                 question=question,
@@ -413,10 +493,7 @@ def update_survey(
             db.add(new_question)
             db.commit()
             db.refresh(new_question)
-            log(
-                log.INFO,
-                f"update_survey: question '{question}' created for survey {question}",
-            )
+            log(log.INFO, "update_survey: question [%s] created", question)
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
@@ -445,6 +522,10 @@ def update_survey(
 async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     """Get for admin report survey data"""
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
+
+    if survey:
+        log(log.INFO, "formed_report_survey: survey [%s]", survey.title)
+
     report_file = io.StringIO()
 
     report = csv.writer(report_file)
@@ -465,17 +546,21 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
 
     questions_answers = []
 
-    if len(survey_questions) > 0:
-        for item in survey_questions:
-            answers = (
-                db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
-            )
-            questions_answers.append(
-                {
-                    "question": item.question,
-                    "answers": [data_answer.answer for data_answer in answers],
-                }
-            )
+    for item in survey_questions:
+        log(
+            log.INFO,
+            "formed_report_survey: questions count [%d]",
+            len(survey_questions),
+        )
+        answers = (
+            db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
+        )
+        questions_answers.append(
+            {
+                "question": item.question,
+                "answers": [data_answer.answer for data_answer in answers],
+            }
+        )
 
     # survey_questions = [
     #     {"question": survey.question, "answers": survey.answers}
@@ -493,6 +578,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         ],
     )
     data_questions.append(["questions"])
+
     for item in questions_answers:
         data_questions.append([item["question"], item["answers"]])
     log(
@@ -510,3 +596,85 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     buf.name = "report_survey.csv"
 
     return StreamingResponse(buf, media_type="text/csv")
+
+
+def get_surveys_for_user(user, db):
+    return db.query(model.Survey).filter(model.Survey.user_id == user.id).all()
+
+
+def get_survey_info(survey: schema.Survey):
+    questions = []
+    for q in survey.questions:
+        if len(q.question) > 0:
+            questions.append(q)
+    return {
+        "id": survey.id,
+        "uuid": survey.uuid,
+        "title": survey.title,
+        "description": survey.description,
+        "created_at": survey.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        "user_id": survey.user_id,
+        "questions": questions,
+        "published": survey.published,
+    }
+
+
+@router.get("/uuid/{uuid}", response_model=schema.SurveysDataResult)
+def get_survey_by_uuid(
+    page: int = None,
+    query: str = "",
+    uuid: str = "",
+    db: Session = Depends(get_db),
+):
+
+    user = db.query(model.User).filter(model.User.uuid == uuid).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
+    surveys_by_user = [
+        get_survey_info(survey) for survey in get_surveys_for_user(user, db)
+    ]
+
+    sorted_surveys = sorted(
+        surveys_by_user, key=lambda value: value["created_at"], reverse=True
+    )
+
+    if query:
+        search_survey = [
+            item for item in sorted_surveys if query.lower() in item["title"].lower()
+        ]
+        return schema.SurveysDataResult(
+            data=search_survey, data_length=len(search_survey)
+        )
+
+    return schema.SurveysDataResult(
+        data=sorted_surveys[:page], data_length=len(sorted_surveys)
+    )
+
+
+@router.post("/info_survey", response_model=bool)
+def check_answer_the_question(
+    req_data: schema.SurveyNextSession, db: Session = Depends(get_db)
+):
+    survey = db.query(model.Survey).filter(model.Survey.uuid == req_data.uuid).first()
+    if not survey:
+        log(log.INFO, "get_answer_next_session_of_survey: survey not found")
+        return "Survey not found"
+
+    log(log.INFO, f"get_answer_next_session_of_survey: [{survey.id}] survey exist")
+
+    questions = survey.questions
+    if len(questions) > 0:
+        for question in questions:
+            answers = question.answers
+            if len(answers) > 0:
+                sessions = []
+                for answer in answers:
+                    session = answer.session.session
+                    if session == req_data.session:
+                        sessions.append(session)
+                if len(sessions) > 0:
+                    return True
+
+    return False

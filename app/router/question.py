@@ -30,7 +30,9 @@ def create_question(
     db.refresh(new_question)
     log(
         log.INFO,
-        f"create_question: question '{new_question.question}' created for survey {new_question.survey}",
+        "create_question: question [%s] created for survey [%s]",
+        new_question.question,
+        new_question.survey,
     )
 
     return new_question
@@ -39,13 +41,13 @@ def create_question(
 @router.get("/{id}", response_model=schema.Question)
 def get_question(id: int, db: Session = Depends(get_db)):
     question = db.query(model.Question).get(id)
-    log(log.INFO, f"get_question: question {id} exists: {bool(question)}")
 
     if not question:
-        log(log.ERROR, f"get_question: question {id} doesn't exist")
+        log(log.ERROR, "get_question: question [%d] doesn't exist", id)
         raise HTTPException(
             status_code=404, detail="get_question: This question was not found"
         )
+    log(log.INFO, "get_question: question [%d] exists", id)
     return question
 
 
@@ -56,20 +58,20 @@ def delete_question(
     # current_user: int = Depends(oauth2.get_current_user),
 ):
     deleted_question = db.query(model.Question).filter_by(id=id).first()
-    log(log.INFO, f"delete_question: question {id} exists: {bool(deleted_question)}")
+
+    if not deleted_question:
+        log(log.INFO, f"delete_question: question doesn't exists")
+        raise HTTPException(
+            status_code=404, detail="delete_question: This question was not found"
+        )
+
     answers = db.query(model.Answer).filter(model.Answer.question_id == id)
 
-    if len(answers.all()) > 0:
+    if answers.all():
         log(log.INFO, "delete_question: count [%d] of answers: ", len(answers.all()))
         answers.delete()
         db.commit()
         log(log.INFO, "delete_question:  answers deleted")
-
-    if not deleted_question:
-        log(log.ERROR, f"delete_question: question {id} doesn't exists")
-        raise HTTPException(
-            status_code=404, detail="delete_question: This question was not found"
-        )
 
     # if deleted_question.first().user_id != current_user.id:
     #     raise HTTPException(
@@ -91,13 +93,14 @@ def update_question(
     # current_user: int = Depends(oauth2.get_current_user),
 ):
     update_question = db.query(model.Question).filter_by(id=id).first()
-    log(log.INFO, f"update_question: question {id} exists: {bool(update_question)}")
 
     if not update_question:
-        log(log.ERROR, f"delete_question: question {id} doesn't exists")
+        log(log.ERROR, "delete_question: question doesn't exists")
         raise HTTPException(
             status_code=404, detail="update_question: This question was not found"
         )
+
+    log(log.INFO, "update_question: question [%s] exists", update_question)
 
     # if update_question.first().user_id != current_user.id:
     #     raise HTTPException(
@@ -109,6 +112,6 @@ def update_question(
     # update_question.update(question_info.dict(), synchronize_session=False)
     db.commit()
     db.refresh(update_question)
-    log(log.INFO, f"update_question: question {id} was updated")
+    log(log.INFO, "update_question: question [%d] was updated", id)
 
     return update_question
