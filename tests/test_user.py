@@ -48,9 +48,11 @@ def test_get_users(client: TestClient, db: Session):
     """Test for get_users function from router/user.py"""
 
     # create two new users
-    frst_new_user = create_user()
-    response_frst = client.post("/backend/user/create_user", json=frst_new_user.dict())
-    assert response_frst.ok
+    first_new_user = create_user()
+    first_new_user = client.post(
+        "/backend/user/create_user", json=first_new_user.dict()
+    )
+    assert first_new_user.ok
     sec_new_user = create_user(name="John", email="john@john.com")
     response_sec = client.post("/backend/user/create_user", json=sec_new_user.dict())
     assert response_sec.ok

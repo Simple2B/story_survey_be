@@ -11,7 +11,7 @@ router = APIRouter(prefix="/backend/answer", tags=["Answers"])
 @router.get("/", response_model=List[schema.Answer])
 def get_answers(db: Session = Depends(get_db)):
     answers = db.query(model.Answer).all()
-    log(log.INFO, f"get_answers: [{len(answers)}] answers exist")
+    log(log.INFO, "get_answers: [%d] answers exist", len(answers))
     return answers
 
 
@@ -45,13 +45,15 @@ def create_answer(
                 db.refresh(session_next)
                 log(
                     log.INFO,
-                    f"create_answer: session_next [{session_next.id}] created: {bool(session_next)}",
+                    "create_answer: session_next [%d] created",
+                    session_next.id,
                 )
                 sessions.append(session_next)
 
             log(
                 log.INFO,
-                f"create_answer: session_next [{session_next.session}] exists: {bool(session_next)}",
+                "create_answer: session_next [%s] exists",
+                session_next.session,
             )
 
             answer = (
@@ -63,7 +65,8 @@ def create_answer(
             if answer and answer.session_id == session_next.id and item.is_answer:
                 log(
                     log.INFO,
-                    f"create_answer: answer [{answer.id}] was already created for this session",
+                    "create_answer: answer [%d] was already created for this session",
+                    answer.id,
                 )
 
                 return {
@@ -80,10 +83,7 @@ def create_answer(
             db.commit()
             db.refresh(new_answer)
 
-            log(
-                log.INFO,
-                f"create_answer: new_answer [{new_answer.id}] created",
-            )
+            log(log.INFO, "create_answer: new_answer [%d] created", new_answer.id)
             answers.append(new_answer)
 
     if len(answers) > 0:
@@ -110,13 +110,12 @@ def create_answer(
 @router.get("/{id}", response_model=schema.Answer)
 def get_answer(id: int, db: Session = Depends(get_db)):
     answer = db.query(model.Answer).get(id)
-    log(log.INFO, f"get_answer: answer [{id}] exists: {bool(answer)}")
-
     if not answer:
-        log(log.ERROR, f"get_answer: answer [{id}] doesn't exist")
+        log(log.ERROR, "get_answer: answer [%d] doesn't exist", id)
         raise HTTPException(
             status_code=404, detail="get_question: This answer was not found"
         )
+    log(log.INFO, "get_answer: answer [%d] exists", id)
     return answer
 
 
@@ -126,17 +125,15 @@ def delete_answer(
     db: Session = Depends(get_db),
 ):
     deleted_answer = db.query(model.Answer).filter_by(id=id).first()
-    log(log.INFO, f"delete_answer: answer [{id}] exists: {bool(deleted_answer)}")
-
     if not deleted_answer:
-        log(log.ERROR, f"delete_answer: answer [{id}] doesn't exists")
+        log(log.ERROR, "delete_answer: answer [%d] doesn't exists", id)
         raise HTTPException(
             status_code=404, detail="delete_question: This answer was not found"
         )
+    log(log.INFO, "delete_answer: answer [%d] exists", id)
     db.delete(deleted_answer)
     db.commit()
     log(log.INFO, f"delete_answer: answer [{id}] was deleted")
-
     return Response(status_code=204)
 
 
@@ -147,16 +144,14 @@ def update_answer(
     db: Session = Depends(get_db),
 ):
     update_answer = db.query(model.Answer).filter_by(id=id)
-    log(log.INFO, f"update_answer: answer [{id}] exists: {bool(update_answer.first())}")
-
     if not update_answer.first():
-        log(log.ERROR, f"update_answer: answer [{id}] doesn't exists")
+        log(log.ERROR, "update_answer: answer [%d] doesn't exists", id)
         raise HTTPException(
             status_code=404, detail="update_question: This answer was not found"
         )
-
+    log(log.INFO, "update_answer: answer [%d] exists", id)
     update_answer.update(question_info.dict(), synchronize_session=False)
     db.commit()
-    log(log.INFO, f"update_answer: answer [{id}] was updated")
+    log(log.INFO, "update_answer: answer [%d] was updated", id)
 
     return update_answer.first()

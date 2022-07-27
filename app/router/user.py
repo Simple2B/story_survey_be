@@ -10,13 +10,13 @@ router = APIRouter(prefix="/backend/user", tags=["Users"])
 @router.get("/get_users", response_model=schema.AllUsers)
 def get_users(page: int = None, query: str = "", db: Session = Depends(get_db)):
     users = db.query(model.User).all()
-    log(log.INFO, f"get_users: number of users {len(users)}")
+    log(log.INFO, "get_users: users count [%s]", users)
 
-    if len(users) > 0:
+    if users:
         users_list = [get_user_with_stripe_info(user, db) for user in users]
         sorted_users = sorted(users_list, key=lambda value: value["username"])
 
-        if (len(query)) > 0:
+        if query:
             search_survey = [
                 item
                 for item in sorted_users
@@ -36,7 +36,7 @@ def get_users(page: int = None, query: str = "", db: Session = Depends(get_db)):
 def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
 
     user = db.query(model.User).filter(model.User.email == n_user.email).first()
-    log(log.INFO, f"create_user: user {n_user.email} exists: {bool(user)}")
+    log(log.INFO, "create_user: user [%s] exists", n_user.email)
 
     if not user:
         user = model.User(**n_user.dict())
@@ -44,7 +44,7 @@ def create_user(n_user: schema.UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
-    log(log.INFO, f"create_user: user {user}")
+    log(log.INFO, "create_user: user [%s]", user)
 
     return created_user_info(user, db)
 
@@ -59,6 +59,8 @@ def get_user_by_id(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
+    log(log.INFO, "get_user_by_id: user [%s] exists", user)
+
     return get_user_with_stripe_info(user, db)
 
 
@@ -72,6 +74,8 @@ def get_user_by_uuid(
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
 
+    log(log.INFO, "get_user_by_uuid: user [%s] exists", user)
+
     return get_user_with_stripe_info(user, db)
 
 
@@ -81,11 +85,12 @@ def get_user(
     db: Session = Depends(get_db),
 ):
     user = db.query(model.User).filter(model.User.email == email).first()
-    log(log.INFO, f"get_user: user {email} exists: {bool(user)}")
 
     if not user:
         log(log.ERROR, f"get_user: no user {email}")
         raise HTTPException(status_code=404, detail="This user was not found")
+
+    log(log.INFO, "get_user: user email [%s]", email)
 
     return get_user_with_stripe_info(user, db)
 
@@ -99,6 +104,8 @@ def get_user_stripe_info(
 
     if not user:
         raise HTTPException(status_code=404, detail="This user was not found")
+
+    log(log.INFO, "get_user: user [%s]", user)
 
     return get_user_with_stripe_info(user, db)
 
@@ -165,7 +172,9 @@ def get_user_with_stripe_info(user, db):
             "product_id": customer_subscription.product_id,
         }
 
-        log(log.INFO, f"create_user: customer id {customer_subscription.customer_id}")
+        log(
+            log.INFO, "create_user: customer id [%s]", customer_subscription.customer_id
+        )
 
     return {
         "id": user.id,
@@ -205,7 +214,7 @@ def created_user_info(user, db):
             "product_id": customer_subscription.product_id,
         }
 
-        log(log.INFO, f"set_user: customer id {customer_subscription.customer_id}")
+        log(log.INFO, "set_user: customer id [%s]", customer_subscription.customer_id)
 
     return {
         "id": user.id,
@@ -226,5 +235,11 @@ def get_stripe_cancel_at_period_end(user, db):
         .first()
     )
     if stripe_info:
+        log(
+            log.INFO,
+            "get_stripe_cancel_at_period_end: cancel at period end [%s]",
+            stripe_info.cancel_at_period_end,
+        )
         return stripe_info.cancel_at_period_end
+
     return None

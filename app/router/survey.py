@@ -20,14 +20,15 @@ load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 @router.get("/surveys", response_model=schema.SurveysDataResult)
 def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)):
     surveys = db.query(model.Survey).all()
-    log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
     surveys_with_question = []
     if not surveys:
-        log(log.INFO, "get_surveys: surveys count [%d]", len(surveys))
+        log(log.INFO, "get_surveys: no surveys")
         return schema.SurveysDataResult(
             data=surveys_with_question, data_length=len(surveys_with_question)
         )
+
+    log(log.INFO, "get_surveys: count surveys [%s]", len(surveys))
 
     surveys.sort(key=lambda survey: survey.created_at, reverse=True)
 
@@ -243,7 +244,7 @@ def get_survey(id: str, db: Session = Depends(get_db)):
     questions = (
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
-    log(log.INFO, "get_survey: questions [%s]", questions)
+    log(log.INFO, "get_survey: questions [%d]", len(questions))
 
     return {
         "id": survey.id,
@@ -266,13 +267,13 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
     if not survey:
         raise HTTPException(status_code=404, detail="This survey was not found")
 
-    log(log.INFO, "get_survey: survey [%s]", survey)
+    log(log.INFO, "get_survey: survey [%d]", survey.id)
     questions = (
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
     log(log.INFO, "get_survey: questions [%s]", questions)
 
-    if len(questions) > 1:
+    if questions:
         # questions.sort(key=lambda x: x.id)
         questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
@@ -303,7 +304,9 @@ def get_survey_with_answer(id: int, db: Session = Depends(get_db)):
         db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
     )
 
-    if len(questions) > 1:
+    questions_length = len(questions)
+
+    if questions_length > 1:
         questions = sorted(questions, key=lambda x: (x.question == "", x.question))
 
     log(log.INFO, "get_survey_with_answer: questions [%s]", questions)
@@ -346,7 +349,7 @@ def delete_survey(
         db.query(model.Survey).filter((model.Survey.user_id == user.id)).all()
     )
 
-    if len(user_surveys) > 0:
+    if user_surveys:
         for survey in user_surveys:
             if data.survey_id == survey.id:
                 del_survey = (
@@ -398,13 +401,18 @@ def update_survey(
     user = db.query(model.User).filter(model.User.email == survey.email).first()
 
     if not user:
+        log(log.INFO, "update_survey: user with this key not found")
         raise HTTPException(status_code=404, detail="User with this key not found")
+
+    log(log.INFO, "update_survey: user [%s]", user)
 
     updated_survey = db.query(model.Survey).filter_by(id=id)
     # update_question
 
     if not updated_survey.first():
         raise HTTPException(status_code=404, detail="This survey was not found")
+
+    log(log.INFO, "update_survey: survey [%d] for update", updated_survey.id)
 
     edit_survey = updated_survey.first()
 
@@ -428,6 +436,7 @@ def update_survey(
     }
 
     for item in new_questions:
+        log(log.INFO, "update_survey: new_questions count [%d]", len(new_questions))
         updated_questions = sorted(
             updated_questions, key=lambda x: (x.question == "", x.question)
         )
@@ -444,7 +453,12 @@ def update_survey(
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
-    if len(deleted_questions) > 0:
+    if deleted_questions:
+        log(
+            log.INFO,
+            "update_survey: deleted_questions count [%d]",
+            len(deleted_questions),
+        )
         for question in deleted_questions:
             answers = db.query(model.Answer).filter(
                 model.Answer.question_id == question["id"]
@@ -465,7 +479,12 @@ def update_survey(
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
-    if len(create_question) > 0:
+    if create_question:
+        log(
+            log.INFO,
+            "update_survey: create_question count [%d]",
+            len(deleted_questions),
+        )
         for question in create_question:
             new_question = model.Question(
                 question=question,
@@ -506,6 +525,10 @@ def update_survey(
 async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     """Get for admin report survey data"""
     survey = db.query(model.Survey).filter(model.Survey.uuid == uuid).first()
+
+    if survey:
+        log(log.INFO, "formed_report_survey: survey [%s]", survey.title)
+
     report_file = io.StringIO()
 
     report = csv.writer(report_file)
@@ -526,17 +549,21 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
 
     questions_answers = []
 
-    if len(survey_questions) > 0:
-        for item in survey_questions:
-            answers = (
-                db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
-            )
-            questions_answers.append(
-                {
-                    "question": item.question,
-                    "answers": [data_answer.answer for data_answer in answers],
-                }
-            )
+    for item in survey_questions:
+        log(
+            log.INFO,
+            "formed_report_survey: questions count [%d]",
+            len(survey_questions),
+        )
+        answers = (
+            db.query(model.Answer).filter(model.Answer.question_id == item.id).all()
+        )
+        questions_answers.append(
+            {
+                "question": item.question,
+                "answers": [data_answer.answer for data_answer in answers],
+            }
+        )
 
     # survey_questions = [
     #     {"question": survey.question, "answers": survey.answers}
@@ -554,6 +581,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
         ],
     )
     data_questions.append(["questions"])
+
     for item in questions_answers:
         data_questions.append([item["question"], item["answers"]])
     log(
@@ -595,7 +623,7 @@ def get_survey_info(survey: schema.Survey):
 
 
 @router.get("/uuid/{uuid}", response_model=schema.SurveysDataResult)
-def get_servey_by_uuid(
+def get_survey_by_uuid(
     page: int = None,
     query: str = "",
     uuid: str = "",
@@ -604,18 +632,18 @@ def get_servey_by_uuid(
 
     user = db.query(model.User).filter(model.User.uuid == uuid).first()
 
+    if not user:
+        raise HTTPException(status_code=404, detail="This user was not found")
+
     surveys_by_user = [
         get_survey_info(survey) for survey in get_surveys_for_user(user, db)
     ]
-
-    if not user:
-        raise HTTPException(status_code=404, detail="This user was not found")
 
     sorted_surveys = sorted(
         surveys_by_user, key=lambda value: value["created_at"], reverse=True
     )
 
-    if (len(query)) > 0:
+    if query:
         search_survey = [
             item for item in sorted_surveys if query.lower() in item["title"].lower()
         ]

@@ -23,7 +23,6 @@ def create_stripe_customer(
 
     # check existance of user with such email
     user = db.query(model.User).filter(model.User.email == data.email).first()
-    log(log.INFO, f"create_stripe_customer: user {data.email} exists: {bool(user)}")
 
     if not user:
         user = model.User(email=data.email)
@@ -33,6 +32,7 @@ def create_stripe_customer(
         log(
             log.INFO, f"create_stripe_customer: user {data.email} created: {bool(user)}"
         )
+    log(log.INFO, "create_stripe_customer: user [%s] found", data.email)
 
     # check existance of such customer_id
     stripe_customer = (
@@ -49,14 +49,9 @@ def create_stripe_customer(
         db.refresh(stripe_customer)
         log(
             log.INFO,
-            f"create_stripe_customer: customer {data.stripe_customer} created: {bool(stripe_customer)}",
+            "create_stripe_customer: customer [%s] created ",
+            data.stripe_customer,
         )
-        log(log.INFO, f"create_stripe_customer: for user {stripe_customer.user}")
-
-    log(
-        log.INFO,
-        f"create_stripe_customer: customer {data.stripe_customer} exists: {bool(stripe_customer)}",
-    )
 
     # return users data
     user_customer = schema.UserOut(
@@ -77,9 +72,6 @@ def delete_stripe_customer(data: schema.StripeCustomer, db: Session = Depends(ge
     This route deletes data in stripe_data model if row with accepted customer_id has no session_id.
     You can use it if user pressed "Cancel button" on Subscription type page.
     """
-    if not data.customer_id:
-        log(log.ERROR, "delete_customer: customer id doesn't exists")
-        Response(status_code=404)
 
     # check existance of such customer_id
     stripe_customer = db.query(model.Subscription).filter(
@@ -90,10 +82,7 @@ def delete_stripe_customer(data: schema.StripeCustomer, db: Session = Depends(ge
         log(log.ERROR, "delete_customer: customer doesn't exists")
         Response(status_code=404)
 
-    log(
-        log.INFO,
-        f"delete_customer: customer {data.customer_id} exists: {bool(stripe_customer)}",
-    )
+    log(log.INFO, "delete_customer: customer [%s] exists", data.customer_id)
 
     stripe_customer.delete()
     db.commit()
@@ -110,11 +99,12 @@ def create_stripe_session(data: schema.StripeSession, db: Session = Depends(get_
 
     # check existance of user
     user = db.query(model.User).filter_by(email=data.email).first()
-    log(log.INFO, f"create_stripe_session: user {data.email} exists: {bool(user)}")
 
     if not user:
-        log(log.ERROR, f"create_stripe_session: user {data.email} doesn't exists")
+        log(log.ERROR, "create_stripe_session: user [%s] doesn't exists", data.email)
         raise HTTPException(status_code=404, detail="This user was not found")
+
+    log(log.INFO, "create_stripe_session: user [%s] exists", data.email)
 
     # check existance of such customer_id in model stripe_data
     stripe_data = (
@@ -127,14 +117,10 @@ def create_stripe_session(data: schema.StripeSession, db: Session = Depends(get_
         db.add(stripe_data)
         db.commit()
         db.refresh(stripe_data)
-        log(
-            log.INFO,
-            f"create_stripe_session: customer_id {data.stripe_customer} created: {bool(stripe_data)}",
-        )
-        log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
+        log(log.INFO, "create_stripe_session: customer_id [%s]", data.stripe_customer)
+
     log(
-        log.INFO,
-        f"create_stripe_session: customer_id {data.stripe_customer} exists: {bool(stripe_data)}",
+        log.INFO, "create_stripe_session: customer_id [%s] exists", data.stripe_customer
     )
 
     # insert data into the stripe_data model
@@ -150,10 +136,11 @@ def create_stripe_session(data: schema.StripeSession, db: Session = Depends(get_
     db.refresh(stripe_data)
     log(
         log.INFO,
-        f"create_stripe_session: data was inserted:\
-            {stripe_data.session_id}, {stripe_data.product_id}",
+        "create_stripe_session: data was inserted: session id [%s], product id [%s]",
+        stripe_data.session_id,
+        stripe_data.product_id,
     )
-    log(log.INFO, f"create_stripe_session: for user {stripe_data.user}")
+    log(log.INFO, "create_stripe_session: for user [%s]", {stripe_data.user})
 
     # create my response
     my_response = schema.UserOut(
@@ -185,14 +172,12 @@ def create_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     if not stripe_data:
         log(
             log.ERROR,
-            f"create_subscription: customer {data.stripe_customer} doesn't exists",
+            "create_subscription: customer [%] doesn't exists",
+            data.stripe_customer,
         )
         raise HTTPException(status_code=404, detail="This user was not found")
 
-    log(
-        log.INFO,
-        f"create_subscription: customer {data.stripe_customer} exists: {bool(stripe_data)}",
-    )
+    log(log.INFO, "create_subscription: customer [%s] exists ", data.stripe_customer)
 
     # insert data into the stripe_data model
     stripe_data.subscription_id = data.subscription_id
@@ -201,8 +186,9 @@ def create_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     db.refresh(stripe_data)
     log(
         log.INFO,
-        f"create_subscription: subscription_id {stripe_data.subscription_id} was inserted for\
-        {stripe_data.customer_id} - {stripe_data.user}",
+        "create_subscription: subscription_id [%s] was inserted for stripe customer [%s]",
+        stripe_data.subscription_id,
+        stripe_data.customer_id,
     )
 
     # create my response
@@ -227,9 +213,16 @@ def update_subscription(data: schema.StripeSubscription, db: Session = Depends(g
     if not stripe_data_subscription:
         log(
             log.ERROR,
-            f"update_subscription: subscription_id {data.subscription_id} doesn't exists",
+            "update_subscription: subscription_id [%s] doesn't exists",
+            data.subscription_id,
         )
         raise HTTPException(status_code=404, detail="There is no such subscription_id")
+
+    log(
+        log.ERROR,
+        "update_subscription: subscription_id [%s] exists",
+        data.subscription_id,
+    )
 
     cancel_at_period_end = data.subscription["cancel_at_period_end"]
     cancel_at = data.subscription["cancel_at"]
@@ -243,15 +236,16 @@ def update_subscription(data: schema.StripeSubscription, db: Session = Depends(g
         stripe_data_subscription.type = model.Subscription.SubscriptionType.Advance
         stripe_data_subscription.product_id = product_key
 
-    log(
-        log.INFO,
-        f"update_subscription: subscription_id {data.subscription_id} exists: {bool(stripe_data_subscription)}",
-    )
-
     stripe_data_subscription.cancel_at_period_end = cancel_at_period_end
     stripe_data_subscription.cancel_at = datetime.now() if cancel_at else None
     db.commit()
     db.refresh(stripe_data_subscription)
+
+    log(
+        log.ERROR,
+        "update_subscription: subscription type [%s]",
+        stripe_data_subscription.type,
+    )
 
     return Response(status_code=204)
 
@@ -272,13 +266,15 @@ def delete_subscription(data: schema.DeleteSubscription, db: Session = Depends(g
     if not stripe_data:
         log(
             log.ERROR,
-            f"delete_subscription: subscription_id {data.subscription_id} doesn't exists",
+            "delete_subscription: subscription_id [%s] doesn't exists",
+            data.subscription_id,
         )
         raise HTTPException(status_code=404, detail="There is no such subscription_id")
 
     log(
         log.INFO,
-        f"delete_subscription: subscription_id {data.subscription_id} exists: {bool(stripe_data)}",
+        "delete_subscription: subscription_id [%s] exists",
+        data.subscription_id,
     )
 
     # delete data from stripe_data model
@@ -292,7 +288,8 @@ def delete_subscription(data: schema.DeleteSubscription, db: Session = Depends(g
     db.commit()
     log(
         log.INFO,
-        f"delete_subscription: row with subscription_id {data.subscription_id} was deleted",
+        "delete_subscription: row with subscription_id [%s] was deleted",
+        data.subscription_id,
     )
 
     return Response(status_code=204)
