@@ -43,7 +43,7 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
 
         # questions = [item for item in questions if item.question]
 
-        log(log.INFO, "get_surveys: count of questions [%d]", len(questions))
+        # log(log.INFO, "get_surveys: count of questions [%d]", len(questions))
 
         questions_with_answers = []
         for question in questions:
@@ -63,11 +63,11 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                     }
                     for answer in answers
                 ]
-            log(
-                log.INFO,
-                "get_surveys: answer [%d]",
-                len(answers),
-            )
+            # log(
+            #     log.INFO,
+            #     "get_surveys: answer [%d]",
+            #     len(answers),
+            # )
 
             question = {
                 "id": question.id,
@@ -412,7 +412,7 @@ def update_survey(
     if not updated_survey.first():
         raise HTTPException(status_code=404, detail="This survey was not found")
 
-    log(log.INFO, "update_survey: survey [%d] for update", updated_survey.id)
+    log(log.INFO, "update_survey: survey [%s] for update", updated_survey)
 
     edit_survey = updated_survey.first()
 
@@ -493,10 +493,7 @@ def update_survey(
             db.add(new_question)
             db.commit()
             db.refresh(new_question)
-            log(
-                log.INFO,
-                f"update_survey: question '{question}' created for survey {question}",
-            )
+            log(log.INFO, "update_survey: question [%s] created", question)
         updated_survey.update(data_edit_survey, synchronize_session=False)
         db.commit()
 
