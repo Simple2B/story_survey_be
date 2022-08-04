@@ -138,6 +138,11 @@ def get_user_surveys(
         questions = (
             db.query(model.Question).filter(model.Question.survey_id == survey.id).all()
         )
+        # number of answers to questions
+        answered = 0
+        for i in range(len(survey.questions)):
+            if survey.questions[i].answers:
+                answered = answered + 1
 
         for item in questions:
             if item.question == "":
@@ -147,7 +152,6 @@ def get_user_surveys(
         questions = [{"id": item.id, "question": item.question} for item in questions]
 
         # questions = sorted(questions, key=lambda x: x["id"])
-
         surveys_with_question.append(
             {
                 "id": survey.id,
@@ -162,6 +166,7 @@ def get_user_surveys(
                 if survey.successful_message
                 else "",
                 "published": survey.published,
+                "answers": answered,
             }
         )
 
@@ -607,6 +612,11 @@ def get_survey_info(survey: schema.Survey):
     for q in survey.questions:
         if len(q.question) > 0:
             questions.append(q)
+            # number of answers to questions
+    answered = 0
+    for i in range(len(survey.questions)):
+        if survey.questions[i].answers:
+            answered = answered + 1
     return {
         "id": survey.id,
         "uuid": survey.uuid,
@@ -616,6 +626,7 @@ def get_survey_info(survey: schema.Survey):
         "user_id": survey.user_id,
         "questions": questions,
         "published": survey.published,
+        "answers": answered,
     }
 
 
