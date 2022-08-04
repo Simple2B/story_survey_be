@@ -41,6 +41,11 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                 questions.remove(item)
                 questions.append(item)
 
+        # number of answers to questions
+        answered = 0
+        for i in range(len(survey.questions)):
+            if survey.questions[i].answers:
+                answered = answered + 1
         # questions = [item for item in questions if item.question]
 
         # log(log.INFO, "get_surveys: count of questions [%d]", len(questions))
@@ -91,6 +96,7 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                 if survey.successful_message
                 else "",
                 "published": survey.published,
+                "answers": answered,
             }
         )
 
