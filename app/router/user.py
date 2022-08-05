@@ -131,6 +131,7 @@ def get_survey_info(survey: schema.Survey):
         "user_id": survey.user_id,
         "questions": questions,
         "published": survey.published,
+        "answers_limit": survey.answers_limit,
     }
 
 

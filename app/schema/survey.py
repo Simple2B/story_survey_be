@@ -20,6 +20,7 @@ class SurveyCreate(SurveyBase):
     questions: Optional[List]
     questions_deleted: Optional[List]
     create_question: Optional[List]
+    answers_limit: Optional[bool]
 
 
 class Survey(SurveyBase):
@@ -33,6 +34,7 @@ class Survey(SurveyBase):
     questions: Optional[List]
     successful_message: Optional[str]
     published: Optional[bool]
+    answers_limit: Optional[bool]
 
 
 class SurveysDataResult(BaseModel):
@@ -49,6 +51,7 @@ class SurveyReportData(SurveyBase):
     description: Optional[str]
     created_at: Optional[str]
     published: Optional[bool]
+    answers_limit: Optional[bool]
     questions: Optional[List]
     answers: Optional[List]
 

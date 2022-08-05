@@ -97,6 +97,7 @@ def get_surveys(page: int = None, query: str = "", db: Session = Depends(get_db)
                 else "",
                 "published": survey.published,
                 "answers": answered,
+                "answers_limit": survey.answers_limit,
             }
         )
 
@@ -173,6 +174,7 @@ def get_user_surveys(
                 else "",
                 "published": survey.published,
                 "answers": answered,
+                "answers_limit": survey.answers_limit,
             }
         )
 
@@ -210,6 +212,7 @@ def create_survey(
         successful_message=survey.successful_message,
         user_id=user.id,
         published=survey.published,
+        answers_limit=survey.answers_limit,
     )
     db.add(new_survey)
     db.commit()
@@ -240,6 +243,7 @@ def create_survey(
         "user_id": new_survey.user_id,
         "questions": new_survey.questions,
         "published": new_survey.published,
+        "answers_limit": new_survey.answers_limit,
     }
 
 
@@ -299,6 +303,7 @@ def get_not_public_survey(uuid: str, db: Session = Depends(get_db)):
         "email": survey.user.email,
         "questions": questions,
         "published": survey.published,
+        "answers_limit": survey.answers_limit,
     }
 
 
@@ -443,6 +448,7 @@ def update_survey(
         "description": survey.description,
         "successful_message": survey.successful_message,
         "published": survey.published,
+        "answers_limit": survey.answers_limit,
         "user_id": user.id,
     }
 
@@ -540,7 +546,9 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     report_file = io.StringIO()
 
     report = csv.writer(report_file)
-    data = [["user", "title", "description", "created_at", "published"]]
+    data = [
+        ["user", "title", "description", "created_at", "published", "answers_limit"]
+    ]
 
     data_questions = []
 
@@ -550,6 +558,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
     survey_description = survey.description
     survey_created_at = survey.created_at.strftime("%H:%M:%S %b %d %Y")
     survey_published = survey.published
+    survey_answers_limit = survey.answers_limit
 
     survey_questions = (
         db.query(model.Question).filter(model.Question.survey_id == survey_id).all()
@@ -586,6 +595,7 @@ async def formed_report_survey(uuid: str, db: Session = Depends(get_db)):
             survey_description,
             survey_created_at,
             survey_published,
+            survey_answers_limit,
         ],
     )
     data_questions.append(["questions"])
@@ -633,6 +643,7 @@ def get_survey_info(survey: schema.Survey):
         "questions": questions,
         "published": survey.published,
         "answers": answered,
+        "answers_limit": survey.answers_limit,
     }
 
 

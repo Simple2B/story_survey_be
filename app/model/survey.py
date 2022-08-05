@@ -20,6 +20,7 @@ class Survey(Base):
     successful_message = Column(String(512), nullable=True)
     created_at = Column(DateTime(), default=datetime.now)
     published = Column(Boolean, default=True)
+    answers_limit = Column(Boolean, default=True)
 
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User")
