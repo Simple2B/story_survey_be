@@ -530,6 +530,7 @@ def update_survey(
         "questions": questions,
         "title": data_survey.title,
         "user_id": user.id,
+        "answers_limit": data_survey.answers_limit,
     }
 
     return new_data_survey
