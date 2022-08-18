@@ -22,6 +22,7 @@ class AnswerCreate(AnswerBase):
     session_id: Optional[str]
     start_time: Optional[str]
     end_time: Optional[str]
+    number_of_question: Optional[int]
 
 
 class Answer(AnswerBase):
@@ -33,6 +34,7 @@ class Answer(AnswerBase):
     session: Optional[str]
     start_time: Optional[str]
     end_time: Optional[str]
+    number_of_question: Optional[int]
 
 
 class AnswerInfoMessage(AnswerBase):

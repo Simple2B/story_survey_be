@@ -69,7 +69,7 @@ def test_create_survey(client: TestClient, db: Session):
         answers.append(answer_data.dict())
 
     # create answers for question
-    response = client.post("/backend/answer/create_answer", json=answers)
+    response = client.post(f"/backend/answer/create_answer/{1}", json=answers)
     assert response
     create_answer = response.json()
     assert create_answer
@@ -113,11 +113,16 @@ def test_create_survey(client: TestClient, db: Session):
             }
         )
 
-    response = client.post("/backend/answer/create_answer", json=answerInfo)
+    response = client.post(f"/backend/answer/create_answer/{2}", json=answerInfo)
     assert response
     answers = response.json()
     assert answers
-    assert len(answers) == 3
+    assert len(answers) == 1
+
+    # delete answer
+    response = client.post(f"/backend/answer/undo_answer/{2}", json=answerInfo)
+    assert response
+    assert response.status_code == 201
 
     # get survey with answer and check next session
     req_data = {

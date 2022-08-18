@@ -16,17 +16,18 @@ def get_answers(db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/create_answer",
+    "/create_answer/{countQuestion}",
     status_code=201,
     response_model=Union[List[schema.Answer], schema.AnswerInfoMessage],
 )
 def create_answer(
     answer_info: List[schema.AnswerCreate],
     db: Session = Depends(get_db),
+    countQuestion: int = 0,
 ):
     answers = []
     sessions = []
-    for item in answer_info:
+    for item in answer_info[countQuestion:countQuestion + 1]:
         if len(item.session_id) > 0 and len(item.answer) > 0:
             # start_time = datetime.strptime(item.start_time, "%m/%d/%Y, %H:%M:%S")
             session_next = (
@@ -62,7 +63,7 @@ def create_answer(
                 .first()
             )
 
-            if answer and answer.session_id == session_next.id and item.is_answer:
+            if answer and answer.session_id == session_next.id and len(item.answer) < 1:
                 log(
                     log.INFO,
                     "create_answer: answer [%d] was already created for this session",
@@ -73,7 +74,7 @@ def create_answer(
                     "message": "You already answered this question",
                     "question_id": answer.question_id,
                 }
-
+        # if item.is_answer:
             new_answer = model.Answer(
                 answer=item.answer,
                 question_id=item.question.id,
@@ -105,6 +106,29 @@ def create_answer(
             for answer in answers
         ]
         return answers
+
+
+@router.post(
+    "/undo_answer/{answerID}",
+    status_code=201,
+    response_model=Union[int, str],
+)
+def undo_answer(
+    answer_info: List[schema.AnswerCreate],
+    db: Session = Depends(get_db),
+    answerID: int = 0,
+):
+
+    answer = db.query(model.Answer).filter((model.Answer.id == answerID))
+
+    if answer.first():
+        answer.delete(synchronize_session=False)
+        db.commit()
+        log(log.INFO, "undo_answer: answer deleted")
+
+        return answerID
+
+    return f"This [Answer ID: {answerID}] doesn't exist."
 
 
 @router.get("/{id}", response_model=schema.Answer)
